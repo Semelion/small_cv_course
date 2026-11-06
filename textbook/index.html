@@ -1,0 +1,728 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Компьютерное зрение — мини-курс</title><style>body{margin:0;background:#eef2f5;color:#17212b;font:18px/1.65 system-ui,sans-serif}main{max-width:1000px;margin:auto;padding:40px 56px;background:white}h1,h2,h3{line-height:1.25;color:#103c55}h1{font-size:2.2rem;margin-top:1.4em}h2{margin-top:1.8em}a{color:#006a92}img{max-width:100%;height:auto;border:1px solid #d4dee4;border-radius:8px}pre{background:#102936;color:#eff8fc;padding:20px;overflow:auto;border-radius:8px;font-size:14px;line-height:1.55}code{font-family:ui-monospace,monospace}p code,li code,td code{background:#edf3f6;padding:2px 5px;border-radius:4px}table{border-collapse:collapse;width:100%;font-size:16px}td,th{border:1px solid #c9d6dd;padding:10px;text-align:left}th{background:#e6f1f5}section+section{border-top:3px solid #cee0e8;margin-top:64px;padding-top:24px}nav{position:sticky;top:0;background:#103c55;color:white;padding:12px 20px;font-size:14px;text-align:center}nav a{color:white;margin:0 9px}@media(max-width:650px){main{padding:18px}body{font-size:16px}nav{position:static}h1{font-size:1.8rem}}@media print{nav{display:none}body{background:white;font-size:11pt}main{padding:0;max-width:none}pre{white-space:pre-wrap;background:#eee;color:#111}section{break-before:page}img{max-height:17cm;object-fit:contain}h1,h2,h3{break-after:avoid}}</style></head><body><nav><a href="#README">Начало</a><a href="#00_start">Запуск</a><a href="#01_images">Изображения</a><a href="#02_camera_aruco">Камера / ArUco</a><a href="#03_serial">Serial</a><a href="#04_teacher">Преподавателю</a></nav><main><section id="README"><h1 id="_1">Компьютерное зрение: от пикселя до светодиода</h1>
+<p>Учебник после вводного видео с установкой Python, Anaconda, VS Code, OpenCV и pyserial. Формат: <strong>две пары по 90 минут + консультации</strong>. Если пара у вас короче, переносите задания со звёздочкой на консультацию. Все примеры лежат рядом с учебником и работают локально.</p>
+<p><strong>Начните с <code>index.html</code> в браузере</strong> или читайте главы в предпросмотре Markdown в VS Code (<code>Ctrl+Shift+V</code>, на macOS <code>Cmd+Shift+V</code>). Каждый шаг: прочитать → набрать небольшой фрагмент → запустить → изменить один параметр → объяснить результат. Готовый скрипт используйте для сверки, а не вместо самостоятельного набора.</p>
+<h2 id="_2">Маршрут</h2>
+<ol>
+<li><a href="#00_start">Как начать писать и запускать код</a>.</li>
+<li><a href="#01_images">Изображение как матрица: пиксели, цвета, маски, объекты</a>.</li>
+<li><a href="#02_camera_aruco">Камера и ArUco</a>.</li>
+<li><a href="#03_serial">Компьютер → RP2040: управление светодиодами</a>.</li>
+<li><a href="#04_teacher">План преподавателя и контрольные задания</a>.</li>
+</ol>
+<h2 id="_3">Что получится</h2>
+<p><img alt="Поиск цветных объектов" src="assets/generated/objects.png" /></p>
+<p>Вы сможете вырезать участок изображения, менять пиксели, выделять цвет маской и обводить объекты; показывать видеопоток и подписанные ArUco-маркеры; отправлять с компьютера команды <code>r</code>, <code>g</code>, <code>b</code> на плату.</p>
+<h2 id="_4">Файлы</h2>
+<ul>
+<li><code>examples/</code> — семь самостоятельных программ Python.</li>
+<li><code>assets/</code> — учебная сцена, иллюстрации, маркер для показа камере, схема подключения.</li>
+<li><code>arduino/rgb_serial/rgb_serial.ino</code> — прошивка Arduino для RP2040.</li>
+<li><code>chapters/</code> — исходный текст учебника с фрагментами кода.</li>
+<li><code>CHECKS.md</code> — что проверено программно и что требует оборудования.</li>
+</ul>
+<p>Примеры используют пути относительно своего файла. Поэтому исходное изображение найдётся независимо от рабочей папки терминала. Ваши <code>../test.py</code> и <code>../civic.jpeg</code> остаются исходными материалами вводного урока.</p></section><section id="00_start"><h1 id="0">0. От открытого изображения к своей программе</h1>
+<p>Вы уже запустили <code>cv.imread()</code> и увидели картинку. Теперь будем менять её содержимое. Не нужно переустанавливать весь стек: сначала убедитесь, что VS Code запускает тот Python, в котором установлены библиотеки.</p>
+<h2 id="01">0.1. Рабочее место</h2>
+<ol>
+<li>Откройте в VS Code папку <code>CV_course</code> через <strong>File → Open Folder</strong>.</li>
+<li>Вызовите палитру команд (<code>Ctrl+Shift+P</code>, macOS <code>Cmd+Shift+P</code>), выберите <strong>Python: Select Interpreter</strong>, затем своё окружение Anaconda с OpenCV. На компьютере автора найдено окружение <code>opencv</code>; у вас имя может отличаться.</li>
+<li>Откройте <strong>Terminal → New Terminal</strong>. Если меняли интерпретатор, создайте новый терминал.</li>
+<li>Перейдите в папку курса: на macOS/Linux <code>cd ~/CV_course</code>; на Windows — <code>cd</code> и ваш путь к папке. Активируйте своё окружение, например <code>conda activate opencv</code>.</li>
+<li>Выполните проверку:</li>
+</ol>
+<pre><code class="language-bash">python -c &quot;import sys, cv2, numpy, serial; print(sys.executable); print(cv2.__version__); print(hasattr(cv2, 'aruco'))&quot;
+</code></pre>
+<p>Нужны путь к выбранному Python, версия OpenCV и <code>True</code>. Если импорт не работает, сравните интерпретатор VS Code с <code>sys.executable</code>. Устанавливайте зависимости именно через <code>python -m pip</code> в выбранном окружении. Пакет называется <strong>pyserial</strong>, импортируется как <code>serial</code>.</p>
+<p>Не ставьте несколько пакетов OpenCV одновременно: они предоставляют один модуль <code>cv2</code>. Если нынешняя установка уже работает и содержит <code>aruco</code>, оставьте её. Для отдельного нового учебного окружения можно использовать:</p>
+<pre><code class="language-bash">conda create -n cv_course python=3.12 -y
+conda activate cv_course
+python -m pip install opencv-contrib-python numpy pyserial
+</code></pre>
+<p>После этого выберите <code>cv_course</code> в VS Code. Для окон нужен обычный пакет OpenCV, а не вариант <code>headless</code>. Если <code>conda</code> не находится на Windows, откройте Anaconda Prompt. Подробности ArUco разобраны в главе 2.</p>
+<h2 id="02">0.2. Первый собственный файл</h2>
+<p>Создайте <code>my_first.py</code> прямо в <code>CV_course</code>, рядом с изображением <code>civic.jpeg</code>. Наберите:</p>
+<pre><code class="language-python">from pathlib import Path
+import cv2 as cv
+
+path = Path(__file__).resolve().parent / &quot;civic.jpeg&quot;
+img = cv.imread(str(path))
+if img is None:
+    raise FileNotFoundError(f&quot;Не удалось открыть: {path}&quot;)
+
+print(&quot;Размер и каналы:&quot;, img.shape)
+print(&quot;Тип значений:&quot;, img.dtype)
+cv.imshow(&quot;My image&quot;, img)
+cv.waitKey(0)
+cv.destroyAllWindows()
+</code></pre>
+<p>Запуск в терминале из папки курса:</p>
+<pre><code class="language-bash">python my_first.py
+</code></pre>
+<p><code>import</code> подключает библиотеку; <code>as cv</code> даёт ей короткое имя. <code>img</code> — переменная с массивом изображения. <code>print</code> выводит текст в терминал, <code>imshow</code> открывает отдельное окно. <code>waitKey(0)</code> ждёт клавишу <strong>в окне изображения</strong>. После неё программа закрывает окна. <code>Path(__file__)</code> привязывает путь к месту хранения скрипта.</p>
+<p>Запускайте весь <code>.py</code> через терминал или <strong>Run Python File in Terminal</strong>. Кнопка расширения Code Runner может использовать другой Python; не смешивайте способы запуска, пока не убедились, что окружения совпадают. Для программ с <code>input()</code> нужен терминал, а не панель Output.</p>
+<h2 id="03-python">0.3. Минимум Python для следующих шагов</h2>
+<pre><code class="language-python">height, width = img.shape[:2]     # распаковали два числа
+x, y = 20, 10
+pixel = img[y, x]                # взяли значение
+print(pixel)
+
+for y in range(3):               # y = 0, 1, 2
+    print(&quot;Строка&quot;, y)           # отступ — тело цикла
+
+if width &gt; 100:
+    print(&quot;Изображение шире 100 пикселей&quot;)
+</code></pre>
+<p>Индексы начинаются с нуля. В <code>range(3)</code> верхняя граница не включается. Отступы в Python определяют, какие строки входят в цикл или условие; используйте четыре пробела. <code>=</code> присваивает значение, <code>==</code> сравнивает. Комментарий после <code>#</code> объясняет код и не выполняется.</p>
+<p>Теперь измените только заголовок окна, запустите снова и убедитесь, что выполняется сохранённый файл. Затем переходите к матрицам.</p>
+<h2 id="_1">Как работать с ошибкой</h2>
+<p>Сначала прочитайте последнюю строку traceback, затем найдите указанный номер строки в своём <code>.py</code>. <code>ModuleNotFoundError</code> обычно означает неверное окружение или отсутствующий пакет; <code>FileNotFoundError</code> — путь; <code>IndexError</code> — выход за размер матрицы; <code>IndentationError</code> — отступы. Если программа ждёт клавишу, переключитесь в окно OpenCV. Остановить скрипт в терминале можно <code>Ctrl+C</code>.</p></section><section id="01_images"><h1 id="_1">Первая пара. От изображения к найденному объекту</h1>
+<p>За 90 минут пройдем цепочку: <strong>массив чисел → изменение пикселей → HSV → маска → контуры → рамки и подписи</strong>. Сначала работаем с подготовленной картинкой, чтобы у всех получился одинаковый результат. Затем переносим приемы на свои фотографии.</p>
+<table>
+<thead>
+<tr>
+<th>Время</th>
+<th>Что делаем</th>
+<th>Что должно получиться</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0–10 мин</td>
+<td>Создаем файл, читаем изображение, проверяем путь</td>
+<td>Окно с картинкой</td>
+</tr>
+<tr>
+<td>10–30 мин</td>
+<td>Размер, пиксель, обрезка, цикл</td>
+<td>Фрагмент и красноватая картинка</td>
+</tr>
+<tr>
+<td>30–45 мин</td>
+<td>GRAY и HSV</td>
+<td>Серое изображение, значения HSV</td>
+</tr>
+<tr>
+<td>45–60 мин</td>
+<td>Цветовая маска</td>
+<td>Белые зеленые фигуры на черном фоне</td>
+</tr>
+<tr>
+<td>60–80 мин</td>
+<td>Контуры, площадь, рамки, надписи</td>
+<td>Две рамки с подписями</td>
+</tr>
+<tr>
+<td>80–90 мин</td>
+<td>Самостоятельное изменение</td>
+<td>Поиск синего или красного объекта</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1">1. Создаем свой первый рабочий файл</h2>
+<p>Открой в VS Code папку <code>CV_course</code>. Внутри <code>textbook/examples</code> создай <code>my_image.py</code>. Открой встроенный терминал <strong>Terminal → New Terminal</strong>. Выбери тот же Python-интерпретатор, в котором на вводном уроке работал <code>import cv2</code>: команда <strong>Python: Select Interpreter</strong> в палитре команд VS Code. Если терминал уже был открыт до смены интерпретатора, открой новый и активируй нужное conda-окружение.</p>
+<p>Вставь код ниже и сохрани файл. Для запуска из папки курса набери <code>python textbook/examples/my_image.py</code>. Терминал должен находиться в <code>CV_course</code>; это видно в приглашении или по команде <code>pwd</code> (PowerShell: <code>Get-Location</code>). Сам путь к картинке в программе не зависит от текущей папки терминала.</p>
+<pre><code class="language-python">from pathlib import Path
+import cv2 as cv
+
+root = Path(__file__).resolve().parents[1]  # Папка textbook.
+img = cv.imread(str(root / 'assets/scene.png'))
+if img is None:
+    raise FileNotFoundError('Не удалось прочитать assets/scene.png')
+
+cv.imshow('image', img)
+cv.waitKey(0)
+cv.destroyAllWindows()
+</code></pre>
+<p><code>import</code> подключает библиотеку, <code>as cv</code> задает короткое имя. Переменная <code>img</code> хранит изображение. <code>__file__</code> — путь текущего <code>.py</code>-файла; две ступени вверх от него приводят к <code>textbook</code>. <code>waitKey(0)</code> ждет нажатия клавиши в окне OpenCV. Чтобы закрыть пример, щелкни по окну и нажми любую клавишу.</p>
+<p>Следующие фрагменты добавляй <strong>перед <code>imshow</code></strong>, а в <code>imshow</code> передавай нужную переменную. Готовые версии уже лежат в <code>examples/01_pixels.py</code>, <code>02_colors.py</code>, <code>03_objects.py</code>. В них несколько окон; каждое показывает свой этап.</p>
+<p><img alt="Учебная сцена: два зеленых объекта, красный круг, синий прямоугольник и мелкие зеленые точки" src="assets/scene.png" /></p>
+<p><strong>Проверка:</strong> исходная сцена размером 640×400 пикселей. Зеленых крупных фигур две; маленькие точки специально понадобятся для фильтрации помех.</p>
+<h2 id="2">2. Изображение — массив</h2>
+<pre><code class="language-python">print(img.shape)  # (400, 640, 3)
+print(img.dtype)  # uint8
+height, width = img.shape[:2]
+print(height, width)
+</code></pre>
+<p><code>shape</code> сообщает <strong>высоту, ширину и число каналов</strong>, именно в этом порядке. <code>uint8</code> хранит целое число от 0 до 255. Один цветной пиксель содержит три числа. OpenCV обычно читает цветное изображение в порядке <strong>B, G, R</strong>: синий, зеленый, красный. Черный — <code>(0, 0, 0)</code>, белый — <code>(255, 255, 255)</code>, чистый красный — <code>(0, 0, 255)</code>.</p>
+<p>В массиве сначала указывают строку <code>y</code>, затем столбец <code>x</code>. Начало координат находится в левом верхнем углу; <code>x</code> растет вправо, <code>y</code> вниз. Индексация начинается с нуля: последний допустимый <code>x</code> здесь равен 639, <code>y</code> — 399.</p>
+<pre><code class="language-python">print(img[120, 100])     # Пиксель x=100, y=120: [40 190 40].
+print(img[120, 100, 1])  # Только зеленый канал: 190.
+changed = img.copy()
+changed[120, 100] = (255, 255, 255)
+changed[115:126, 95:106] = (255, 255, 255)  # Уже заметный квадрат.
+</code></pre>
+<p><code>copy()</code> создает независимое изображение. Простое <code>changed = img</code> даст другое имя тому же массиву: изменение одного изменит другое.</p>
+<p><img alt="Оси изображения и границы обрезки" src="assets/coordinates.png" /></p>
+<p><strong>Попробуй:</strong> закрась квадрат 30×30 в синий. Проверь, что изменилось бы при перестановке <code>x</code> и <code>y</code>.</p>
+<h2 id="3">3. Обрезка: выбираем область интереса</h2>
+<pre><code class="language-python">crop = img[80:240, 60:260].copy()
+print(crop.shape)  # (160, 200, 3)
+cv.imshow('crop', crop)
+</code></pre>
+<p>Запись <code>[y1:y2, x1:x2]</code> берет строки от <code>y1</code> до <code>y2 − 1</code> и столбцы от <code>x1</code> до <code>x2 − 1</code>. Правая граница не включается. Поэтому высота равна <code>240 − 80</code>, ширина — <code>260 − 60</code>. Такой фрагмент часто называют ROI, областью интереса. Без <code>.copy()</code> срез обычно связан с исходным массивом: закрашивая его, ты изменишь и оригинал.</p>
+<p><img alt="Обрезанная область с зеленым прямоугольником" src="assets/generated/crop.png" /></p>
+<p><strong>Попробуй:</strong> вырежи красный круг целиком. Ожидаемый размер фрагмента сначала посчитай на бумаге, затем проверь через <code>shape</code>. Если окно не открывается, проверь, не получился ли пустой срез из-за перепутанных границ.</p>
+<h2 id="4">4. Проходим по всем пикселям и добавляем красный</h2>
+<pre><code class="language-python">tinted = img.copy()
+for y in range(height):
+    for x in range(width):
+        b, g, r = img[y, x]
+        tinted[y, x] = (int(b), int(g), min(255, int(r) + 60))
+</code></pre>
+<p><code>range(height)</code> перебирает номера строк; для каждой строки внутренний цикл перебирает все столбцы. Отступы задают вложенность: последняя строка выполняется для каждого пикселя. Мы сохраняем B и G, а R увеличиваем на 60. <code>int(r)</code> сначала переводит значение в обычное целое Python; <code>min(255, ...)</code> ограничивает результат. Например, из R=220 получается 255, а не число за пределами <code>uint8</code>.</p>
+<p><img alt="Красный оттенок добавлен ко всем пикселям" src="assets/generated/tinted.png" /></p>
+<p>Цикл нужен, чтобы понять устройство картинки. Для больших изображений используем операцию над целым каналом NumPy:</p>
+<pre><code class="language-python">import numpy as np
+
+fast = img.copy()
+red = img[:, :, 2].astype(np.int16)
+fast[:, :, 2] = np.clip(red + 60, 0, 255).astype(np.uint8)
+print(np.array_equal(tinted, fast))  # True
+</code></pre>
+<p>Двоеточие означает «все строки» или «все столбцы». Временный <code>int16</code> позволяет безопасно получить числа больше 255. <code>clip</code> ограничивает диапазон, затем мы возвращаем тип <code>uint8</code>. Выражение <code>img[:, :, 2] + 60</code> прямо в <code>uint8</code> может переполниться: арифметика массива не обязана насыщаться на 255.</p>
+<p><strong>Попробуй:</strong> добавь синий оттенок, затем полностью обнули красный канал. Объясни разницу между «увеличить R» и «заменить каждый пиксель красным».</p>
+<h2 id="5">5. Меняем цветовое пространство</h2>
+<pre><code class="language-python">gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+print(gray.shape)  # (400, 640)
+print(hsv[120, 100])  # [60 201 190]
+</code></pre>
+<p>GRAY хранит по одному значению яркости на пиксель. Цвет теряется, размер изображения в пикселях сохраняется. Это результат преобразования с весами для каналов, а не выбор одного из B, G или R.</p>
+<p><img alt="Изображение после преобразования в оттенки серого" src="assets/generated/gray.png" /></p>
+<p>HSV разделяет <strong>H — оттенок</strong>, <strong>S — насыщенность</strong>, <strong>V — значение яркости</strong>. Для обычного 8-битного <code>COLOR_BGR2HSV</code> в OpenCV H лежит в диапазоне <strong>0–179</strong>, S и V — <strong>0–255</strong>. Примерные оттенки: красный около 0 и 179, зеленый около 60, синий около 120. У серого насыщенность мала; его H не помогает определить цвет.</p>
+<p>Не показывай <code>hsv</code> через обычный <code>imshow</code> как цветную картинку: окно интерпретирует три канала как BGR, и цвета будут неверными. Можно показать отдельные каналы как серые изображения:</p>
+<pre><code class="language-python">h, s, v = cv.split(hsv)
+cv.imshow('H channel', h)
+</code></pre>
+<p><strong>Попробуй:</strong> сравни BGR и HSV пикселей из зеленой фигуры и серого фона. Что лучше отделяет их друг от друга?</p>
+<h2 id="6">6. Маска: задаем условие для каждого пикселя</h2>
+<pre><code class="language-python">mask = cv.inRange(hsv, (40, 80, 60), (85, 255, 255))
+selected = cv.bitwise_and(img, img, mask=mask)
+</code></pre>
+<p><code>inRange</code> проверяет сразу три компоненты HSV. Пиксель попадает в маску, если <strong>40 ≤ H ≤ 85, 80 ≤ S ≤ 255 и 60 ≤ V ≤ 255</strong>. Нижняя и верхняя границы включены. Маска — одноканальный массив: 255 означает «выбран», 0 — «не выбран». Порог S убирает серый фон, порог V — слишком темные области.</p>
+<p><img alt="Бинарная маска зеленых областей" src="assets/generated/mask.png" /></p>
+<p>В <code>bitwise_and</code> исходное изображение подано дважды, поэтому цвет остается прежним в выбранных местах; остальные становятся черными.</p>
+<p><img alt="Исходные цвета только под маской" src="assets/generated/selected.png" /></p>
+<p>Если нужно именно <strong>наложить</strong> цветную маску поверх исходника, сделай полупрозрачную подсветку:</p>
+<pre><code class="language-python">overlay = img.copy()
+overlay[mask &gt; 0] = (0, 255, 255)  # Желтая подсветка выбранного.
+overlay = cv.addWeighted(img, 0.6, overlay, 0.4, 0)
+</code></pre>
+<p><img alt="Полупрозрачная подсветка выбранных пикселей" src="assets/generated/overlay.png" /></p>
+<p>Порог — гипотеза о цвете, а не универсальный детектор. На фотографии он зависит от освещения, теней и камеры. Для красного часто нужны два интервала по H: например, 0–10 и 170–179, затем объединение двух масок через <code>cv.bitwise_or(mask1, mask2)</code>.</p>
+<p><strong>Попробуй:</strong> поставь для синего H от 100 до 130 при тех же ограничениях S и V. Должен остаться один синий прямоугольник.</p>
+<h2 id="7">7. Из маски получаем контуры</h2>
+<pre><code class="language-python">contours, hierarchy = cv.findContours(
+    mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE
+)
+result = img.copy()
+count = 0
+for contour in contours:
+    area = cv.contourArea(contour)
+    if area &lt; 500:
+        continue
+    count += 1
+    x, y, w, h = cv.boundingRect(contour)
+    cv.rectangle(result, (x, y), (x + w - 1, y + h - 1), (0, 200, 255), 3)
+    cv.putText(result, f'green {count}: {area:.0f}', (x, max(20, y - 10)),
+               cv.FONT_HERSHEY_SIMPLEX, 0.6, (20, 20, 20), 2, cv.LINE_AA)
+</code></pre>
+<p>Контур описывает границу белой области. <code>RETR_EXTERNAL</code> берет только внешние границы, <code>CHAIN_APPROX_SIMPLE</code> сокращает лишние точки на прямых участках. На вход передаем бинарную маску, не цветное изображение. <code>hierarchy</code> содержит отношения контуров; в этой задаче она не нужна.</p>
+<p><code>contourArea</code> вычисляет геометрическую площадь контура в квадратных пикселях: это не обязательно точное число белых пикселей. <code>continue</code> пропускает мелкие точки. Порог 500 подобран для учебной картинки и при другом масштабе может потребовать изменения.</p>
+<p><code>boundingRect</code> возвращает левый верхний угол <code>(x, y)</code> и размеры <code>(w, h)</code>. В функции рисования точки задаются в порядке <strong>(x, y)</strong>, тогда как доступ к массиву был <strong>[y, x]</strong>. Конечная точка рамки — <code>(x + w - 1, y + h - 1)</code>, чтобы соответствовать пикселям области.</p>
+<p><code>putText</code> рисует строку на изображении. Точка задает начало строки на ее базовой линии. <code>0.6</code> — масштаб шрифта, <code>2</code> — толщина, <code>LINE_AA</code> сглаживает края. Стандартный шрифт OpenCV плохо подходит для кириллицы, поэтому здесь подписи латиницей. Функции рисования изменяют переданное изображение; работаем с <code>result</code>, сохраняя оригинал.</p>
+<p><img alt="Два зеленых объекта с рамками и подписями площадей" src="assets/generated/objects.png" /></p>
+<p><strong>Ожидаемый результат:</strong> две рамки. Для прямоугольника площадь контура 19200, рамка <code>(80, 100, 161, 121)</code>; для круга площадь 5406, рамка <code>(508, 258, 85, 85)</code>. Порядок обхода контуров не является устойчивым ID объекта.</p>
+<h2 id="8">8. Дополнительно: очищаем маску</h2>
+<p>Мелкие точки можно убрать до поиска контуров:</p>
+<pre><code class="language-python">kernel = np.ones((5, 5), np.uint8)
+mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
+</code></pre>
+<p>Морфологическое открытие сначала сужает белые области, затем расширяет их. Тонкие помехи исчезают, но реальные маленькие объекты тоже могут потеряться. Это отдельный прием; для основной задачи достаточно фильтра по площади. В готовом скрипте опция <code>--clean</code> включает эту обработку.</p>
+<h2 id="9">9. Самостоятельная работа и контроль</h2>
+<ol>
+<li>Измени программу так, чтобы искать только синий прямоугольник, подписывая его <code>blue</code>.</li>
+<li>Найди красный круг, объединив две маски по H. Объясни, зачем нужны два интервала.</li>
+<li>Сохрани результат через <code>cv.imwrite('my_result.png', result)</code> и найди файл в текущей папке терминала.</li>
+<li>Заменив учебную сцену своей фотографией, подбери цветовые границы. Для существующего <code>civic.jpeg</code> путь из <code>textbook/examples</code> можно получить так: <code>root.parent / 'civic.jpeg'</code>. Рамка по цвету выделит цветную область, но сама по себе не распознает автомобиль как смысловой объект.</li>
+</ol>
+<p>Для проверки без окон из папки <code>CV_course</code>:</p>
+<pre><code class="language-sh">python textbook/examples/01_pixels.py --no-gui
+python textbook/examples/02_colors.py --no-gui
+python textbook/examples/03_objects.py --no-gui
+</code></pre>
+<p>Результаты записываются в <code>textbook/assets/generated</code>. Повторный запуск обновляет соответствующие PNG. <code>--no-gui</code> нужен для проверки кода без графического окна; на занятии запускай без него.</p>
+<p><strong>Можешь объяснить своими словами?</strong> Почему <code>img[20, 80]</code> и <code>(80, 20)</code> описывают один пиксель? Почему нужен <code>copy()</code>? Чем HSV отличается от маски? Почему зеленая пыль не получила рамку? Какие параметры надо менять при переходе к реальной фотографии?</p>
+<h2 id="-">Если что-то пошло не так</h2>
+<table>
+<thead>
+<tr>
+<th>Симптом</th>
+<th>Что проверить</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ModuleNotFoundError: cv2</code></td>
+<td>Выбран ли интерпретатор с вводного урока, совпадает ли он с Python терминала?</td>
+</tr>
+<tr>
+<td><code>img is None</code> / ошибка чтения</td>
+<td>Существует ли файл, правильно ли названа папка <code>assets</code>, не опечатано ли расширение?</td>
+</tr>
+<tr>
+<td><code>IndexError</code></td>
+<td>Не перепутаны ли x/y, не выходит ли индекс за размер изображения?</td>
+</tr>
+<tr>
+<td>Пустое окно обрезки</td>
+<td>Верхние границы больше нижних? Срез имеет ненулевые высоту и ширину?</td>
+</tr>
+<tr>
+<td>Красный выглядит синим</td>
+<td>В OpenCV кортеж задается в порядке BGR.</td>
+</tr>
+<tr>
+<td>Маска полностью черная</td>
+<td>Диапазоны заданы для HSV? Перед <code>inRange</code> выполнен <code>cvtColor</code>?</td>
+</tr>
+<tr>
+<td>Маска полностью белая</td>
+<td>Не слишком ли широкие границы S/V/H?</td>
+</tr>
+<tr>
+<td>Рамок очень много</td>
+<td>Отфильтруй маленькую площадь, затем при необходимости очисти маску.</td>
+</tr>
+</tbody>
+</table>
+<p>Описание API сверено с официальными материалами OpenCV: <a href="https://docs.opencv.org/4.x/d3/df2/tutorial_py_basic_ops.html">операции с изображениями</a>, <a href="https://docs.opencv.org/4.11.0/df/d9d/tutorial_py_colorspaces.html">цветовые пространства</a>, <a href="https://docs.opencv.org/4.x/da/d97/tutorial_threshold_inRange.html">inRange</a>, <a href="https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html">свойства контуров</a>, <a href="https://docs.opencv.org/4.x/dc/da5/tutorial_py_drawing_functions.html">рисование</a>. Иллюстрации созданы для курса; это результаты прилагаемых программ на синтетической сцене.</p></section><section id="02_camera_aruco"><h1 id="2-aruco">2. Камера и ArUco: от картинки к потоку</h1>
+<p><strong>Цель:</strong> показать живое видео, найти квадратный маркер и обвести его границу с ID. На эту часть второй пары отведём 35 минут: 15 минут на камеру и 20 на маркеры.</p>
+<p>Команды ниже запускаем из <code>CV_course/textbook</code> в терминале VS Code, с тем же Python, которым открывали картинку. Полные программы лежат в <code>examples</code>; фрагменты в тексте показывают главное.</p>
+<h2 id="21">2.1. Кадр — та же матрица</h2>
+<p>В фотографии матрица загружается один раз. В видео камера выдаёт новую матрицу на каждой итерации цикла. Значит, уже знакомые обрезка, маска, контуры и надписи применимы и к кадру.</p>
+<pre><code class="language-python">import cv2 as cv
+
+cap = cv.VideoCapture(0)
+try:
+    if not cap.isOpened():
+        raise RuntimeError('Камера не открылась')
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            raise RuntimeError('Кадр не получен')
+        cv.imshow('Camera', frame)
+        if cv.waitKey(1) &amp; 0xFF in (ord('q'), 27):
+            break
+finally:
+    cap.release()
+    cv.destroyAllWindows()
+</code></pre>
+<p><code>0</code> — индекс камеры, а не номер USB-порта. <code>read()</code> возвращает два значения: получилось ли чтение и сам кадр. Сначала проверяем <code>ok</code>, затем используем <code>frame</code>. <code>while True</code> повторяет чтение, а <code>break</code> завершает цикл. Блок <code>finally</code> освобождает камеру даже при ошибке.</p>
+<p><code>waitKey(1)</code> позволяет окну обновляться и обрабатывает клавиши; это не обещание частоты 1000 кадров/с. Задержка <code>0</code>, знакомая по статической картинке, остановила бы цикл до нажатия клавиши. Для выхода нажми <strong>Q в английской раскладке или Esc</strong>, когда окно видео активно. <a href="https://docs.opencv.org/4.x/dd/d43/tutorial_py_video_display.html">Документация OpenCV о видео</a>.</p>
+<p>Запусти готовую программу:</p>
+<pre><code class="language-bash">python examples/04_camera.py --camera 0
+</code></pre>
+<p><strong>Ожидаем:</strong> открывается окно, движения отображаются непрерывно, Esc закрывает окно и освобождает камеру.</p>
+<p><strong>Попробуй сам, 3 минуты.</strong> Перед <code>imshow</code> вставь:</p>
+<pre><code class="language-python">gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+cv.imshow('Gray', gray)
+</code></pre>
+<p>Появятся цветное и серое видео. Объясни соседу, почему <code>cvtColor</code> находится внутри цикла. Затем удали дополнительное окно перед следующим упражнением.</p>
+<h2 id="22-aruco">2.2. Что такое ArUco</h2>
+<p>ArUco — квадратный чёрно-белый маркер с числовым идентификатором. Мы используем словарь <code>DICT_4X4_50</code>: внутри маркера сетка 4 × 4 бит, в словаре 50 ID, от 0 до 49. Чёрная рамка входит в маркер; снаружи оставляем белое поле. Словарь при создании и при поиске должен совпадать.</p>
+<p>В этом упражнении результат — четыре угла и ID. Мы только рисуем найденные маркеры; расстояние, пространственное положение и калибровку камеры не рассматриваем.</p>
+<h2 id="23">2.3. Сначала изготовим маркер</h2>
+<p>Запусти:</p>
+<pre><code class="language-bash">python examples/06_make_marker.py --id 7
+</code></pre>
+<p>Получится <code>assets/aruco_4x4_50_id7.png</code>:</p>
+<p><img alt="Маркер DICT_4X4_50, ID 7, с белым полем" src="assets/aruco_4x4_50_id7.png" /></p>
+<p>Распечатай его на белой бумаге или покажи на другом экране. Не обрезай белое поле и чёрную рамку. При демонстрации с экрана избегай бликов и слишком маленького размера.</p>
+<p>Главные строки генератора:</p>
+<pre><code class="language-python">dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
+marker = cv.aruco.generateImageMarker(dictionary, 7, 300)
+printable = cv.copyMakeBorder(
+    marker, 60, 60, 60, 60, cv.BORDER_CONSTANT, value=255
+)
+cv.imwrite('marker.png', printable)
+</code></pre>
+<p>Здесь <code>300</code> — размер стороны в пикселях. Функция <code>copyMakeBorder</code> добавляет по 60 белых пикселей с каждой стороны. Генератор в комплекте сохраняет файл в папку <code>assets</code>, независимо от текущей рабочей папки.</p>
+<h2 id="24">2.4. Детектор создаём один раз, ищем в каждом кадре</h2>
+<p>Перед циклом камеры подготовь словарь и детектор:</p>
+<pre><code class="language-python">dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
+parameters = cv.aruco.DetectorParameters()
+detector = cv.aruco.ArucoDetector(dictionary, parameters)
+</code></pre>
+<p>Внутри цикла, после успешного <code>cap.read()</code>, добавь:</p>
+<pre><code class="language-python">corners, ids, rejected = detector.detectMarkers(frame)
+if ids is not None:
+    cv.aruco.drawDetectedMarkers(frame, corners, ids)
+cv.imshow('ArUco', frame)
+</code></pre>
+<p><code>corners</code> содержит углы распознанных маркеров, <code>ids</code> — их номера. Когда распознанных маркеров нет, <code>ids</code> равно <code>None</code>: это обычный результат, а не ошибка. <code>rejected</code> — кандидаты, не прошедшие проверку; в уроке их не используем. <code>drawDetectedMarkers</code> изменяет переданное изображение, обводит маркеры и подписывает ID. <a href="https://docs.opencv.org/4.12.0/d5/dae/tutorial_aruco_detection.html">Официальный пример OpenCV</a>.</p>
+<p>Готовая программа сохраняет исходный кадр, рисуя на его копии:</p>
+<pre><code class="language-bash">python examples/05_aruco.py --camera 0
+</code></pre>
+<p>Поднеси маркер к камере. <strong>Ожидаем:</strong> контур следует за его четырьмя сторонами, рядом виден номер <code>7</code>; если убрать маркер, контур исчезает. Не зеркаль кадр перед распознаванием: зеркальная картинка меняет код маркера.</p>
+<p>Вот реальный результат запуска того же детектора на подготовленном файле, а не снимок с физической камеры:</p>
+<p><img alt="Контур и ID распознанного маркера" src="assets/aruco_detected.png" /></p>
+<h2 id="25">2.5. Проверка без камеры</h2>
+<p>Если камера пока недоступна, проверь алгоритм на файле:</p>
+<pre><code class="language-bash">python examples/05_aruco.py --image assets/aruco_4x4_50_id7.png --no-gui
+</code></pre>
+<p>В терминале должно быть <code>Найденные ID: [7]</code>, а результат появится в <code>assets/aruco_detected.png</code>. Это проверяет генерацию и распознавание, но не работу физической камеры или оконной системы.</p>
+<p><strong>Задание, 5 минут.</strong> Создай ID <code>12</code>, покажи камере два маркера одновременно и добейся двух контуров с правильными номерами. Затем наклони лист и постепенно отдаляй его: в какой момент распознавание пропадает? Назови два фактора, которые влияют на результат.</p>
+<p><strong>Проверка понимания:</strong> где создаётся детектор — до цикла или внутри? Почему надо проверять <code>ids is not None</code>? Что случится, если словари генератора и детектора различаются?</p>
+<h2 id="-">Если что-то не работает</h2>
+<table>
+<thead>
+<tr>
+<th>Симптом</th>
+<th>Что проверить</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Камера не открывается</td>
+<td>Закрыть видеосвязь и другие приложения с камерой, разрешить доступ для приложения, из которого запущен Python; попробовать <code>--camera 1</code>.</td>
+</tr>
+<tr>
+<td>Окно не отвечает</td>
+<td>В цикле должен вызываться <code>waitKey(1)</code>. Клавиши нажимаются в активном окне видео.</td>
+</tr>
+<tr>
+<td><code>cv2</code> не найден</td>
+<td>VS Code и терминал должны использовать одно окружение Python.</td>
+</tr>
+<tr>
+<td>Нет <code>aruco</code> или <code>ArucoDetector</code></td>
+<td>Проверить <code>python -c "import cv2; print(cv2.__version__); print(cv2.__file__)"</code>. Примеры проверены на OpenCV 4.12.0 и в окружении курса с OpenCV 5.0.0. Старые примеры с иным API не смешивать с этим кодом.</td>
+</tr>
+<tr>
+<td>Ошибка <code>imshow</code>, функция не реализована</td>
+<td>Для этих уроков нужна оконная сборка, не <code>headless</code>.</td>
+</tr>
+<tr>
+<td>Маркер виден, но контура нет</td>
+<td>Проверить словарь, белое поле, резкость, свет, размер и отсутствие перекрытия рамки.</td>
+</tr>
+</tbody>
+</table>
+<p>Для единого окружения курса выбран пакет <strong><code>opencv-contrib-python</code></strong>. Это одна поставка <code>cv2</code>; не устанавливай рядом <code>opencv-python</code>, <code>opencv-python-headless</code> или <code>opencv-contrib-python-headless</code>. В современных версиях ArUco может присутствовать и в основной сборке, но смешивать пакеты нельзя: они используют одно имя <code>cv2</code>. Если проверка API проходит, переустановка не нужна. Если обнаружены конфликтующие pip-пакеты, преподаватель поможет удалить дубликаты и оставить одну оконную поставку.</p>
+<p>Если OpenCV был установлен через conda, используй отдельное окружение курса по инструкции из начала учебника, чтобы не смешивать менеджеры для одной библиотеки. <a href="https://github.com/opencv/opencv-python#installation-and-usage">Правила установки от сопровождающих пакета</a>.</p></section><section id="03_serial"><h1 id="3">3. Компьютер посылает команду — плата включает светодиод</h1>
+<p>Цель: в терминале компьютера ввести <code>r</code>, <code>g</code> или <code>b</code> и увидеть соответствующий светодиод. В каждый момент горит только один. <code>off</code> гасит все; <code>q</code> гасит их и завершает программу. Это отдельное упражнение: распознавание объектов здесь ещё не управляет платой.</p>
+<h2 id="_1">Подготовка преподавателя и схема</h2>
+<p>RP2040 — название микроконтроллера, а не конкретной платы. <strong>В этом примере эталонная плата — обычная Raspberry Pi Pico</strong>, Arduino framework, core <strong>Arduino-Pico от Earle Philhower</strong>. Для другой платы сначала сверяем распиновку и выбранную модель в IDE. Наличие встроенного RGB-светодиода не предполагается.</p>
+<p>Нужны USB-кабель с передачей данных, макетная плата, три обычных светодиода R/G/B, три резистора 220–330 Ом (в схеме 330 Ом) и провода. Перед сборкой отключите питание. Каждый анод подключаем к своему GPIO <strong>через свой резистор</strong>, каждый катод — к GND. Обычно анод — длинная ножка, катод — короткая ножка и плоская сторона корпуса; при обрезанных ножках уточните маркировку. Не соединяйте GPIO с 5 В: здесь логика 3,3 В.</p>
+<p><img alt="Схема трёх отдельных светодиодов" src="assets/serial_wiring.svg" /></p>
+<table>
+<thead>
+<tr>
+<th>Цвет</th>
+<th style="text-align: right;">GPIO в коде</th>
+<th style="text-align: right;">Физический контакт обычного Pico</th>
+<th>Цепочка</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Красный</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td>GP2 → резистор → анод R → катод → GND</td>
+</tr>
+<tr>
+<td>Зелёный</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">5</td>
+<td>GP3 → резистор → анод G → катод → GND</td>
+</tr>
+<tr>
+<td>Синий</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">6</td>
+<td>GP4 → резистор → анод B → катод → GND</td>
+</tr>
+<tr>
+<td>Общая земля</td>
+<td style="text-align: right;">GND</td>
+<td style="text-align: right;">3</td>
+<td>Общая точка катодов</td>
+</tr>
+</tbody>
+</table>
+<p>Числа <code>2</code>, <code>3</code>, <code>4</code> в скетче — <strong>GPIO, не порядковые номера ножек</strong>. Схема условная и не изображает физическое расположение контактов: при сборке используйте <a href="https://www.raspberrypi.com/documentation/microcontrollers/pico-series.html">официальную распиновку Pico</a>. Для RGB с общим катодом идея аналогична, но распиновку корпуса нужно проверить. Для общего анода нужна другая схема и обратная логика; адресные WS2812 требуют отдельной библиотеки. На занятии используем три отдельных LED.</p>
+<h2 id="_2">Прошиваем плату один раз</h2>
+<p>Откройте Arduino IDE. В настройках добавьте в «Additional Boards Manager URLs» адрес:</p>
+<pre><code class="language-text">https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+</code></pre>
+<p>В менеджере плат установите пакет Raspberry Pi Pico/RP2040/RP2350 от Earle Philhower. Выберите свою плату (для этой схемы — Raspberry Pi Pico), USB Stack оставьте стандартным Arduino. Откройте <code>textbook/arduino/rgb_serial/rgb_serial.ino</code>. При первом подключении удерживайте BOOTSEL, подключите USB и отпустите кнопку; выберите UF2 Board, если IDE предлагает такой порт, и нажмите Upload. После загрузки выберите появившийся последовательный порт. Подробности и отличия версий IDE — в <a href="https://arduino-pico.readthedocs.io/en/stable/install.html">инструкции установки Arduino-Pico</a>.</p>
+<p>Проверьте в Serial Monitor: скорость 115200, конец строки Newline. Введите <code>ping</code>: ожидается <code>READY</code>; введите <code>r</code>: ожидается <code>OK r</code>, горит красный. Затем <strong>закройте Serial Monitor</strong>, прежде чем запускать Python: одновременно портом должна пользоваться одна программа.</p>
+<h2 id="_3">Договоримся о сообщениях</h2>
+<p>Компьютер передаёт текстовые строки, каждая заканчивается <code>\n</code>. Плата отвечает одной строкой. Это наш небольшой протокол.</p>
+<table>
+<thead>
+<tr>
+<th>От компьютера</th>
+<th>От платы</th>
+<th>Действие</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ping\n</code></td>
+<td><code>READY</code></td>
+<td>Проверить готовность, не менять LED</td>
+</tr>
+<tr>
+<td><code>r\n</code></td>
+<td><code>OK r</code></td>
+<td>Только красный</td>
+</tr>
+<tr>
+<td><code>g\n</code></td>
+<td><code>OK g</code></td>
+<td>Только зелёный</td>
+</tr>
+<tr>
+<td><code>b\n</code></td>
+<td><code>OK b</code></td>
+<td>Только синий</td>
+</tr>
+<tr>
+<td><code>off\n</code></td>
+<td><code>OK off</code></td>
+<td>Погасить всё</td>
+</tr>
+<tr>
+<td>Другая строка</td>
+<td><code>ERR command</code></td>
+<td>Сохранить предыдущее состояние</td>
+</tr>
+</tbody>
+</table>
+<p><code>q</code> обрабатывает только Python: отправляет <code>off</code>, затем закрывает порт. На плату <code>q</code> не передаётся.</p>
+<p>Обе стороны указывают <strong>115200</strong>. В этом уроке связь идёт по USB через объект Arduino <code>Serial</code>. Для USB CDC в выбранном core значение baud не определяет физическую скорость USB, но мы сохраняем согласованные настройки. Аппаратные <code>Serial1</code>/<code>Serial2</code> — UART на GPIO, и там baud уже задаёт реальную скорость. <a href="https://arduino-pico.readthedocs.io/en/stable/serial.html">Документация Serial Arduino-Pico</a>.</p>
+<h2 id="_4">Как устроен скетч</h2>
+<p>Arduino выполняет <code>setup()</code> один раз, <code>loop()</code> — постоянно. Настройка выходов:</p>
+<pre><code class="language-cpp">const int RED_PIN = 2;
+const int GREEN_PIN = 3;
+const int BLUE_PIN = 4;
+
+void setLeds(bool red, bool green, bool blue) {
+  digitalWrite(RED_PIN, red ? HIGH : LOW);
+  digitalWrite(GREEN_PIN, green ? HIGH : LOW);
+  digitalWrite(BLUE_PIN, blue ? HIGH : LOW);
+}
+
+void setup() {
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(BLUE_PIN, OUTPUT);
+  setLeds(false, false, false);
+  Serial.begin(115200);
+}
+</code></pre>
+<p><code>true</code> включает канал, <code>false</code> выключает. Выражение <code>red ? HIGH : LOW</code> выбирает HIGH при <code>true</code> и LOW иначе. Команда <code>r</code> вызывает <code>setLeds(true, false, false)</code>, поэтому предыдущий цвет автоматически гаснет.</p>
+<p>В полном скетче <code>loop()</code> читает приходящие символы и накапливает строку до <code>\n</code>. Это важно: один <code>Serial.read()</code> читает <strong>один байт</strong>, а не всё слово <code>off</code>. <code>\r</code> игнорируется, чтобы работали оба варианта конца строки. Ограничение в 16 символов защищает от случайного бесконечного накопления; переполненная строка получает <code>ERR too_long</code>. Затем <code>handleCommand()</code> выбирает действие и печатает подтверждение.</p>
+<p>Сначала прочитайте полный файл скетча, затем найдите самостоятельно ветку <code>g</code> и добавьте временную команду <code>all</code>. Она должна включать все три LED и подтверждаться <code>OK all</code>. После опыта верните исходный протокол.</p>
+<h2 id="python">Python: сначала короткий опыт</h2>
+<p>Откройте терминал VS Code в окружении курса и перейдите в <code>~/CV_course/textbook</code>. Пакет называется <code>pyserial</code>, импорт — <code>serial</code>:</p>
+<pre><code class="language-bash">python -m pip install pyserial
+python examples/07_serial_led.py --list
+</code></pre>
+<p>Найдите свой порт по описанию и по исчезновению из списка при отключении платы. Примеры имён: <code>COM5</code> в Windows, <code>/dev/cu.usbmodem...</code> в macOS, <code>/dev/ttyACM0</code> в Linux. Многоточие нужно заменить реальным именем из списка.</p>
+<p>Суть передачи команды:</p>
+<pre><code class="language-python">import serial
+
+with serial.Serial(&quot;COM5&quot;, baudrate=115200, timeout=1,
+                   write_timeout=2) as port:
+    port.write(b&quot;ping\n&quot;)
+    print(port.readline().decode(&quot;ascii&quot;).strip())
+</code></pre>
+<p>Замените <code>COM5</code> своим портом. <code>b"..."</code> — байты. <code>write()</code> отправляет байты, <code>readline()</code> ждёт строку с переводом строки, <code>decode()</code> превращает байты в текст, <code>strip()</code> убирает конец строки. <code>timeout</code> ограничивает ожидание; пустая строка после таймаута не означает успешную команду. <code>with</code> закрывает порт при выходе. Если плата перезапустилась при открытии порта, однократного <code>ping</code> может не хватить — это решает полный пример ниже. Поведение чтения описано в <a href="https://pyserial.readthedocs.io/en/latest/pyserial_api.html">API pySerial</a>.</p>
+<h2 id="_5">Полный пример с подтверждениями</h2>
+<p>Запустите <strong>одну</strong> команду со своим портом:</p>
+<pre><code class="language-bash"># Windows
+python examples/07_serial_led.py --port COM5
+# macOS: имя только пример, замените результатом --list
+python examples/07_serial_led.py --port /dev/cu.usbmodem1101
+# Linux
+python examples/07_serial_led.py --port /dev/ttyACM0
+</code></pre>
+<p>Программа сначала повторяет <code>ping</code>, пока не получит <code>READY</code> (до 8 секунд). Такой обмен не зависит от того, успел ли компьютер поймать сообщение при запуске платы. Только после готовности начинается ввод пользователя:</p>
+<pre><code class="language-python">command = input(&quot;&gt; &quot;).strip().lower()
+port.write((command + &quot;\n&quot;).encode(&quot;ascii&quot;))
+</code></pre>
+<p>Полный файл <code>examples/07_serial_led.py</code> проверяет допустимые команды, ждёт <strong>именно</strong> <code>OK r</code> для <code>r</code>, сообщает об ошибках и при штатном выходе отправляет <code>off</code>. Таймаут ответа не доказывает, что команда не выполнилась: мог потеряться ответ. Посмотрите на LED и восстановите связь. При физическом обрыве USB программное выключение подтвердить нельзя.</p>
+<p>Ожидаемый диалог:</p>
+<pre><code class="language-text">READY: r — красный, g — зелёный, b — синий, off — погасить, q — выход
+&gt; r
+OK r
+&gt; g
+OK g
+&gt; b
+OK b
+&gt; off
+OK off
+&gt; q
+</code></pre>
+<h2 id="_6">Практика и контроль</h2>
+<ol>
+<li>Переключите r → g → b и убедитесь, что предыдущий диод гаснет.</li>
+<li>Введите <code>R</code>: Python нормализует регистр. Введите <code>hello</code>: Python отклоняет команду до отправки.</li>
+<li>Закройте Python. Через Serial Monitor отправьте <code>hello</code> с Newline: уже <strong>плата</strong> должна ответить <code>ERR command</code>. Закройте монитор.</li>
+<li>Объясните, зачем <code>\n</code>, подтверждение <code>OK</code> и проверка <code>READY</code>.</li>
+<li>На консультации добавьте команду <code>all</code> в обе программы. После этого можно связать результат цветовой маски с <code>r/g/b</code>, отправляя команду <strong>при смене состояния</strong>, а не на каждом кадре.</li>
+</ol>
+<p>Готово, если ученик самостоятельно выбирает порт, получает <code>READY</code> и три раза переключает свет без перепрошивки.</p>
+<h2 id="-">Если что-то не работает</h2>
+<table>
+<thead>
+<tr>
+<th>Симптом</th>
+<th>Проверка</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>No module named serial</code></td>
+<td>Выбран ли Python окружения курса? Установить <code>python -m pip install pyserial</code> именно в него. Не называйте свой файл <code>serial.py</code>.</td>
+</tr>
+<tr>
+<td>Порта нет</td>
+<td>USB-кабель с данными, разъём, загружен ли скетч; режим BOOTSEL не является обычным serial-портом.</td>
+</tr>
+<tr>
+<td>Порт занят / access denied</td>
+<td>Закрыть Serial Monitor и другие программы, заново посмотреть <code>--list</code>; в Linux проверить права доступа к порту.</td>
+</tr>
+<tr>
+<td>Нет <code>READY</code></td>
+<td>Верный порт, прошит ли именно этот скетч, выбран стандартный USB Serial, окончание строки <code>\n</code>.</td>
+</tr>
+<tr>
+<td><code>OK r</code> есть, LED не горит</td>
+<td>GPIO и физический номер, полярность, общий GND, контакты резистора. Проверять при отключённом питании.</td>
+</tr>
+<tr>
+<td>При g остаётся красный</td>
+<td>Проверить, что используется <code>setLeds(false, true, false)</code> и актуальная прошивка.</td>
+</tr>
+</tbody>
+</table>
+<p>Программные примеры подготовлены для этого протокола. Физическую сборку, компиляцию под конкретную модель и переключение реальных LED нужно проверить на оборудовании перед занятием.</p></section><section id="04_teacher"><h1 id="4">4. План преподавателя и консультации</h1>
+<p>Предполагаем пару 90 минут и базовое знакомство учеников с переменными, условиями и циклами. Если Python совсем новый, разберите раздел 0.3 до первой пары и выделите консультацию на циклы. Полное самостоятельное написание всех семи программ с нуля в 180 минут малореалистично: на паре ученики набирают ключевые операции, служебный код получают готовым.</p>
+<h2 id="1">Пара 1 — изображение и поиск объектов</h2>
+<table>
+<thead>
+<tr>
+<th>Минуты</th>
+<th>Действие</th>
+<th>Проверяемый результат</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0–10</td>
+<td>Запуск собственного файла, <code>shape</code>, <code>dtype</code></td>
+<td>Каждый объясняет высоту, ширину, каналы</td>
+</tr>
+<tr>
+<td>10–30</td>
+<td><code>img[y,x]</code>, crop, копия, цикл изменения цвета</td>
+<td>Есть обрезка и окрашенное целиком изображение</td>
+</tr>
+<tr>
+<td>30–45</td>
+<td>BGR → GRAY, BGR → HSV</td>
+<td>Понятны число каналов и диапазоны HSV</td>
+</tr>
+<tr>
+<td>45–65</td>
+<td><code>inRange</code>, просмотр маски, <code>bitwise_and</code></td>
+<td>На маске белым выделен нужный цвет</td>
+</tr>
+<tr>
+<td>65–82</td>
+<td>Контуры, площадь, <code>boundingRect</code>, <code>putText</code></td>
+<td>Два крупных зелёных объекта обведены и подписаны</td>
+</tr>
+<tr>
+<td>82–90</td>
+<td>Изменить порог площади, объяснить ошибки</td>
+<td>Ученик объясняет, почему исчезла малая область</td>
+</tr>
+</tbody>
+</table>
+<p>Перед каждой демонстрацией спрашивайте: «Какой результат ожидаем?». После запуска меняйте один параметр. Не объясняйте морфологию подробно до первой работающей маски: очистку шума можно перенести на консультацию.</p>
+<h2 id="2">Пара 2 — камера и плата</h2>
+<table>
+<thead>
+<tr>
+<th>Минуты</th>
+<th>Действие</th>
+<th>Проверяемый результат</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0–20</td>
+<td><code>VideoCapture</code>, <code>read</code>, цикл и выход</td>
+<td>Живой кадр; камера освобождается при выходе</td>
+</tr>
+<tr>
+<td>20–38</td>
+<td>Словарь ArUco, маркер, обнаружение и рамка</td>
+<td>Видна рамка и ID 7; без оценки позы</td>
+</tr>
+<tr>
+<td>38–50</td>
+<td>Схема, готовая прошивка, выбор платы/порта</td>
+<td>Плата доступна; схема проверена преподавателем</td>
+</tr>
+<tr>
+<td>50–75</td>
+<td>Python: порт, 115200, строки команд и ответы</td>
+<td><code>r</code>, <code>g</code>, <code>b</code> включают ровно один LED</td>
+</tr>
+<tr>
+<td>75–85</td>
+<td><code>off</code>, неизвестная команда, отключённый порт</td>
+<td>Предсказуемое поведение и понятная диагностика</td>
+</tr>
+<tr>
+<td>85–90</td>
+<td>Короткая демонстрация каждой команды</td>
+<td>Ученик объясняет путь команды до GPIO</td>
+</tr>
+</tbody>
+</table>
+<p>Платы лучше подготовить до второй пары: установить Arduino core, проверить кабели передачи данных и один раз прошить пример. Вторая пара не должна превращаться в массовую установку драйверов. На macOS заранее проверьте разрешение камеры для приложения, из которого запускается Python.</p>
+<h2 id="_1">Что подготовить преподавателю</h2>
+<ul>
+<li>Рабочее Python-окружение на каждом компьютере, папку учебника и исходное фото.</li>
+<li>Веб-камеру на группу, распечатку <code>assets/aruco_4x4_50_id7.png</code> с белым полем. Можно показывать маркер на другом экране, но блики ухудшают обнаружение.</li>
+<li>RP2040-плату, USB-кабель с передачей данных, макетную плату, три LED и три резистора, провода. Сверить GPIO с моделью платы; схема в учебнике рассчитана на обычный Raspberry Pi Pico.</li>
+<li>Резервный компьютер и подготовленную прошивку. Если камера недоступна, демонстрируйте <code>aruco_detected.png</code> и offline-проверку маркера; это не заменяет проверку живого потока.</li>
+</ul>
+<h2 id="_2">Три контрольных задания</h2>
+<p><strong>1. «Редактор изображения», 5–7 минут.</strong> Вырезать область заданного размера, вывести BGR одного пикселя, циклом усилить красный канал во всём изображении. Критерии: размер crop совпадает с разницей границ; исходник не изменён; значения не переполняются; ученик понимает <code>y,x</code>.</p>
+<p><strong>2. «Найди зелёное», 7–10 минут.</strong> Построить маску подготовленной сцены, оставить крупные объекты, подписать их. Критерии: два крупных объекта; маленький шум отфильтрован; маска показана отдельно; прямоугольник не назван контуром. Дополнительно показать ID маркера на камере.</p>
+<p><strong>3. «Три команды», 5–7 минут.</strong> Из Python послать <code>r</code>, <code>g</code>, <code>b</code>, <code>off</code>. Критерии: один LED одновременно, ответ платы соответствует команде, после <code>off</code> все погашены. Ошибочная команда не должна произвольно переключать светодиоды.</p>
+<h2 id="_3">Консультации</h2>
+<p>Первая консультация (30–45 минут, до второй пары): окружения, индексы, границы crop, переполнение <code>uint8</code>, подбор HSV по реальному фото. Не используйте пороги учебной сцены как универсальные пороги для любой камеры.</p>
+<p>Вторая консультация (30–45 минут): камера, освещение ArUco, порты и проводка, разбор вопросов. Ускоренное задание со звёздочкой — перенести маску и прямоугольники в видеопоток. Ещё одно — связать найденный цвет с отправкой команды на плату, отправляя только при смене состояния. Это расширение курса, не обязательная часть двух пар.</p>
+<h2 id="_4">Опорные вопросы для разбора</h2>
+<ol>
+<li>Почему <code>img[20, 50]</code> — строка 20, столбец 50?</li>
+<li>Почему красный пиксель BGR — <code>(0, 0, 255)</code>?</li>
+<li>Чем отличается цветное изображение от бинарной маски?</li>
+<li>Почему сначала смотрим маску, а потом ищем контуры?</li>
+<li>Чем контур отличается от окружающего его прямоугольника?</li>
+<li>Зачем проверять <code>ret</code> и освобождать камеру?</li>
+<li>Почему словарь печатного маркера должен совпадать со словарём детектора?</li>
+<li>Зачем перевод строки в Serial-протоколе и ответ <code>OK</code>?</li>
+</ol>
+<p>Методический план дополнительно сверён с Copilot в открытом VS Code. Его замечания об индексах, каналах, проверке маски и формате команд учтены; технические примеры проверяются отдельно.</p></section></main></body></html>

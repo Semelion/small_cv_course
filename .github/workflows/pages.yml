@@ -1,0 +1,61 @@
+name: Build and deploy textbook
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-site.txt
+      - name: Install site dependencies
+        run: python -m pip install -r requirements-site.txt
+      - name: Build textbook
+        run: python textbook/tools/build_book.py
+      - name: Validate Python examples and site links
+        run: |
+          python -m compileall -q textbook/examples
+          python textbook/tools/check_site.py
+      - name: Prepare publication
+        run: |
+          mkdir _site
+          cp textbook/index.html textbook/README.md textbook/CHECKS.md _site/
+          cp -R textbook/assets textbook/chapters textbook/examples textbook/arduino _site/
+          find _site -type d -name __pycache__ -exec rm -rf {} +
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
