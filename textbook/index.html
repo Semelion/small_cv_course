@@ -20,7 +20,7 @@
 <li><code>chapters/</code> — исходный текст учебника с фрагментами кода.</li>
 <li><code>CHECKS.md</code> — что проверено программно и что требует оборудования.</li>
 </ul>
-<p>Примеры используют пути относительно своего файла. Поэтому исходное изображение найдётся независимо от рабочей папки терминала. Ваши <code>../test.py</code> и <code>../civic.jpeg</code> остаются исходными материалами вводного урока.</p></section><section id="00_start"><h1 id="0">0. От открытого изображения к своей программе</h1>
+<p>Примеры используют обычные строки с путями. Все программы запускайте из папки <code>CV_course</code>: например, <code>python textbook/examples/01_pixels.py</code>. Папка <code>textbook/assets/generated</code> уже входит в комплект. Исходные <code>test.py</code> и <code>civic.jpeg</code> лежат в CV_course.</p></section><section id="00_start"><h1 id="0">0. От открытого изображения к своей программе</h1>
 <p>Вы уже запустили <code>cv.imread()</code> и увидели картинку. Теперь будем менять её содержимое. Не нужно переустанавливать весь стек: сначала убедитесь, что VS Code запускает тот Python, в котором установлены библиотеки.</p>
 <h2 id="01">0.1. Рабочее место</h2>
 <ol>
@@ -41,13 +41,11 @@ python -m pip install opencv-contrib-python numpy pyserial
 <p>После этого выберите <code>cv_course</code> в VS Code. Для окон нужен обычный пакет OpenCV, а не вариант <code>headless</code>. Если <code>conda</code> не находится на Windows, откройте Anaconda Prompt. Подробности ArUco разобраны в главе 2.</p>
 <h2 id="02">0.2. Первый собственный файл</h2>
 <p>Создайте <code>my_first.py</code> прямо в <code>CV_course</code>, рядом с изображением <code>civic.jpeg</code>. Наберите:</p>
-<pre><code class="language-python">from pathlib import Path
-import cv2 as cv
+<pre><code class="language-python">import cv2 as cv
 
-path = Path(__file__).resolve().parent / &quot;civic.jpeg&quot;
-img = cv.imread(str(path))
+img = cv.imread(&quot;civic.jpeg&quot;)
 if img is None:
-    raise FileNotFoundError(f&quot;Не удалось открыть: {path}&quot;)
+    raise FileNotFoundError(&quot;Не найден civic.jpeg. Запускайте программу из папки CV_course.&quot;)
 
 print(&quot;Размер и каналы:&quot;, img.shape)
 print(&quot;Тип значений:&quot;, img.dtype)
@@ -58,7 +56,7 @@ cv.destroyAllWindows()
 <p>Запуск в терминале из папки курса:</p>
 <pre><code class="language-bash">python my_first.py
 </code></pre>
-<p><code>import</code> подключает библиотеку; <code>as cv</code> даёт ей короткое имя. <code>img</code> — переменная с массивом изображения. <code>print</code> выводит текст в терминал, <code>imshow</code> открывает отдельное окно. <code>waitKey(0)</code> ждёт клавишу <strong>в окне изображения</strong>. После неё программа закрывает окна. <code>Path(__file__)</code> привязывает путь к месту хранения скрипта.</p>
+<p><code>import</code> подключает библиотеку; <code>as cv</code> даёт ей короткое имя. <code>img</code> — переменная с массивом изображения. <code>print</code> выводит текст в терминал, <code>imshow</code> открывает отдельное окно. <code>waitKey(0)</code> ждёт клавишу <strong>в окне изображения</strong>. После неё программа закрывает окна. Путь <code>"civic.jpeg"</code> — обычная строка. Python ищет файл в текущей папке терминала: в этом курсе это <code>CV_course</code>.</p>
 <p>Запускайте весь <code>.py</code> через терминал или <strong>Run Python File in Terminal</strong>. Кнопка расширения Code Runner может использовать другой Python; не смешивайте способы запуска, пока не убедились, что окружения совпадают. Для программ с <code>input()</code> нужен терминал, а не панель Output.</p>
 <h2 id="03-python">0.3. Минимум Python для следующих шагов</h2>
 <pre><code class="language-python">height, width = img.shape[:2]     # распаковали два числа
@@ -75,7 +73,13 @@ if width &gt; 100:
 <p>Индексы начинаются с нуля. В <code>range(3)</code> верхняя граница не включается. Отступы в Python определяют, какие строки входят в цикл или условие; используйте четыре пробела. <code>=</code> присваивает значение, <code>==</code> сравнивает. Комментарий после <code>#</code> объясняет код и не выполняется.</p>
 <p>Теперь измените только заголовок окна, запустите снова и убедитесь, что выполняется сохранённый файл. Затем переходите к матрицам.</p>
 <h2 id="_1">Как работать с ошибкой</h2>
-<p>Сначала прочитайте последнюю строку traceback, затем найдите указанный номер строки в своём <code>.py</code>. <code>ModuleNotFoundError</code> обычно означает неверное окружение или отсутствующий пакет; <code>FileNotFoundError</code> — путь; <code>IndexError</code> — выход за размер матрицы; <code>IndentationError</code> — отступы. Если программа ждёт клавишу, переключитесь в окно OpenCV. Остановить скрипт в терминале можно <code>Ctrl+C</code>.</p></section><section id="01_images"><h1 id="_1">Первая пара. От изображения к найденному объекту</h1>
+<p>Сначала прочитайте последнюю строку traceback, затем найдите указанный номер строки в своём <code>.py</code>. <code>ModuleNotFoundError</code> обычно означает неверное окружение или отсутствующий пакет; <code>FileNotFoundError</code> — путь; <code>IndexError</code> — выход за размер матрицы; <code>IndentationError</code> — отступы. Если программа ждёт клавишу, переключитесь в окно OpenCV. Остановить скрипт в терминале можно <code>Ctrl+C</code>.</p>
+<h2 id="_2">Одна папка для всех запусков</h2>
+<p>Все команды учебника выполняйте из папки <strong>CV_course</strong>, не из <code>textbook</code> или <code>examples</code>. В VS Code откройте именно CV_course и новый терминал. На macOS/Linux выполните <code>cd ~/CV_course</code>; на Windows — <code>cd C:/ваш/путь/CV_course</code>. Проверьте командой <code>pwd</code> (PowerShell тоже поддерживает её), что вы в нужной папке.</p>
+<p>Путь записываем прямо в строке:</p>
+<pre><code class="language-python">img = cv.imread(&quot;textbook/assets/scene.png&quot;)
+</code></pre>
+<p>Можно указать полный путь к своему файлу, например <code>cv.imread("C:/Users/Student/Pictures/photo.jpg")</code> или <code>cv.imread("/Users/student/Pictures/photo.jpg")</code>. Замените пример своим путём. На Windows удобно использовать <code>/</code>, чтобы не экранировать обратные слеши. При ошибке проверьте имя, расширение и расположение файла.</p></section><section id="01_images"><h1 id="_1">Первая пара. От изображения к найденному объекту</h1>
 <p>За 90 минут пройдем цепочку: <strong>массив чисел → изменение пикселей → HSV → маска → контуры → рамки и подписи</strong>. Сначала работаем с подготовленной картинкой, чтобы у всех получился одинаковый результат. Затем переносим приемы на свои фотографии.</p>
 <table>
 <thead>
@@ -120,12 +124,10 @@ if width &gt; 100:
 </table>
 <h2 id="1">1. Создаем свой первый рабочий файл</h2>
 <p>Открой в VS Code папку <code>CV_course</code>. Внутри <code>textbook/examples</code> создай <code>my_image.py</code>. Открой встроенный терминал <strong>Terminal → New Terminal</strong>. Выбери тот же Python-интерпретатор, в котором на вводном уроке работал <code>import cv2</code>: команда <strong>Python: Select Interpreter</strong> в палитре команд VS Code. Если терминал уже был открыт до смены интерпретатора, открой новый и активируй нужное conda-окружение.</p>
-<p>Вставь код ниже и сохрани файл. Для запуска из папки курса набери <code>python textbook/examples/my_image.py</code>. Терминал должен находиться в <code>CV_course</code>; это видно в приглашении или по команде <code>pwd</code> (PowerShell: <code>Get-Location</code>). Сам путь к картинке в программе не зависит от текущей папки терминала.</p>
-<pre><code class="language-python">from pathlib import Path
-import cv2 as cv
+<p>Вставь код ниже и сохрани файл. Для запуска из папки курса набери <code>python textbook/examples/my_image.py</code>. Терминал должен находиться в <code>CV_course</code>; это видно в приглашении или по команде <code>pwd</code> (PowerShell: <code>Get-Location</code>). Путь к картинке отсчитывается от папки терминала: запускайте из CV_course.</p>
+<pre><code class="language-python">import cv2 as cv
 
-root = Path(__file__).resolve().parents[1]  # Папка textbook.
-img = cv.imread(str(root / 'assets/scene.png'))
+img = cv.imread('textbook/assets/scene.png')
 if img is None:
     raise FileNotFoundError('Не удалось прочитать assets/scene.png')
 
@@ -133,7 +135,7 @@ cv.imshow('image', img)
 cv.waitKey(0)
 cv.destroyAllWindows()
 </code></pre>
-<p><code>import</code> подключает библиотеку, <code>as cv</code> задает короткое имя. Переменная <code>img</code> хранит изображение. <code>__file__</code> — путь текущего <code>.py</code>-файла; две ступени вверх от него приводят к <code>textbook</code>. <code>waitKey(0)</code> ждет нажатия клавиши в окне OpenCV. Чтобы закрыть пример, щелкни по окну и нажми любую клавишу.</p>
+<p><code>import</code> подключает библиотеку, <code>as cv</code> задает короткое имя. Переменная <code>img</code> хранит изображение. Строка <code>"textbook/assets/scene.png"</code> — путь к картинке от папки CV_course. <code>waitKey(0)</code> ждет нажатия клавиши в окне OpenCV. Чтобы закрыть пример, щелкни по окну и нажми любую клавишу.</p>
 <p>Следующие фрагменты добавляй <strong>перед <code>imshow</code></strong>, а в <code>imshow</code> передавай нужную переменную. Готовые версии уже лежат в <code>examples/01_pixels.py</code>, <code>02_colors.py</code>, <code>03_objects.py</code>. В них несколько окон; каждое показывает свой этап.</p>
 <p><img alt="Учебная сцена: два зеленых объекта, красный круг, синий прямоугольник и мелкие зеленые точки" src="assets/scene.png" /></p>
 <p><strong>Проверка:</strong> исходная сцена размером 640×400 пикселей. Зеленых крупных фигур две; маленькие точки специально понадобятся для фильтрации помех.</p>
@@ -244,7 +246,7 @@ mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
 <li>Измени программу так, чтобы искать только синий прямоугольник, подписывая его <code>blue</code>.</li>
 <li>Найди красный круг, объединив две маски по H. Объясни, зачем нужны два интервала.</li>
 <li>Сохрани результат через <code>cv.imwrite('my_result.png', result)</code> и найди файл в текущей папке терминала.</li>
-<li>Заменив учебную сцену своей фотографией, подбери цветовые границы. Для существующего <code>civic.jpeg</code> путь из <code>textbook/examples</code> можно получить так: <code>root.parent / 'civic.jpeg'</code>. Рамка по цвету выделит цветную область, но сама по себе не распознает автомобиль как смысловой объект.</li>
+<li>Заменив учебную сцену своей фотографией, подбери цветовые границы. Для существующего <code>civic.jpeg</code> напиши <code>img = cv.imread("civic.jpeg")</code>, запуская из CV_course. Рамка по цвету выделит цветную область, но сама по себе не распознает автомобиль как смысловой объект.</li>
 </ol>
 <p>Для проверки без окон из папки <code>CV_course</code>:</p>
 <pre><code class="language-sh">python textbook/examples/01_pixels.py --no-gui
@@ -298,7 +300,7 @@ python textbook/examples/03_objects.py --no-gui
 </table>
 <p>Описание API сверено с официальными материалами OpenCV: <a href="https://docs.opencv.org/4.x/d3/df2/tutorial_py_basic_ops.html">операции с изображениями</a>, <a href="https://docs.opencv.org/4.11.0/df/d9d/tutorial_py_colorspaces.html">цветовые пространства</a>, <a href="https://docs.opencv.org/4.x/da/d97/tutorial_threshold_inRange.html">inRange</a>, <a href="https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html">свойства контуров</a>, <a href="https://docs.opencv.org/4.x/dc/da5/tutorial_py_drawing_functions.html">рисование</a>. Иллюстрации созданы для курса; это результаты прилагаемых программ на синтетической сцене.</p></section><section id="02_camera_aruco"><h1 id="2-aruco">2. Камера и ArUco: от картинки к потоку</h1>
 <p><strong>Цель:</strong> показать живое видео, найти квадратный маркер и обвести его границу с ID. На эту часть второй пары отведём 35 минут: 15 минут на камеру и 20 на маркеры.</p>
-<p>Команды ниже запускаем из <code>CV_course/textbook</code> в терминале VS Code, с тем же Python, которым открывали картинку. Полные программы лежат в <code>examples</code>; фрагменты в тексте показывают главное.</p>
+<p>Команды ниже запускаем из <code>CV_course</code> в терминале VS Code, с тем же Python, которым открывали картинку. Полные программы лежат в <code>examples</code>; фрагменты в тексте показывают главное.</p>
 <h2 id="21">2.1. Кадр — та же матрица</h2>
 <p>В фотографии матрица загружается один раз. В видео камера выдаёт новую матрицу на каждой итерации цикла. Значит, уже знакомые обрезка, маска, контуры и надписи применимы и к кадру.</p>
 <pre><code class="language-python">import cv2 as cv
@@ -321,7 +323,7 @@ finally:
 <p><code>0</code> — индекс камеры, а не номер USB-порта. <code>read()</code> возвращает два значения: получилось ли чтение и сам кадр. Сначала проверяем <code>ok</code>, затем используем <code>frame</code>. <code>while True</code> повторяет чтение, а <code>break</code> завершает цикл. Блок <code>finally</code> освобождает камеру даже при ошибке.</p>
 <p><code>waitKey(1)</code> позволяет окну обновляться и обрабатывает клавиши; это не обещание частоты 1000 кадров/с. Задержка <code>0</code>, знакомая по статической картинке, остановила бы цикл до нажатия клавиши. Для выхода нажми <strong>Q в английской раскладке или Esc</strong>, когда окно видео активно. <a href="https://docs.opencv.org/4.x/dd/d43/tutorial_py_video_display.html">Документация OpenCV о видео</a>.</p>
 <p>Запусти готовую программу:</p>
-<pre><code class="language-bash">python examples/04_camera.py --camera 0
+<pre><code class="language-bash">python textbook/examples/04_camera.py --camera 0
 </code></pre>
 <p><strong>Ожидаем:</strong> открывается окно, движения отображаются непрерывно, Esc закрывает окно и освобождает камеру.</p>
 <p><strong>Попробуй сам, 3 минуты.</strong> Перед <code>imshow</code> вставь:</p>
@@ -334,7 +336,7 @@ cv.imshow('Gray', gray)
 <p>В этом упражнении результат — четыре угла и ID. Мы только рисуем найденные маркеры; расстояние, пространственное положение и калибровку камеры не рассматриваем.</p>
 <h2 id="23">2.3. Сначала изготовим маркер</h2>
 <p>Запусти:</p>
-<pre><code class="language-bash">python examples/06_make_marker.py --id 7
+<pre><code class="language-bash">python textbook/examples/06_make_marker.py --id 7
 </code></pre>
 <p>Получится <code>assets/aruco_4x4_50_id7.png</code>:</p>
 <p><img alt="Маркер DICT_4X4_50, ID 7, с белым полем" src="assets/aruco_4x4_50_id7.png" /></p>
@@ -362,14 +364,14 @@ cv.imshow('ArUco', frame)
 </code></pre>
 <p><code>corners</code> содержит углы распознанных маркеров, <code>ids</code> — их номера. Когда распознанных маркеров нет, <code>ids</code> равно <code>None</code>: это обычный результат, а не ошибка. <code>rejected</code> — кандидаты, не прошедшие проверку; в уроке их не используем. <code>drawDetectedMarkers</code> изменяет переданное изображение, обводит маркеры и подписывает ID. <a href="https://docs.opencv.org/4.12.0/d5/dae/tutorial_aruco_detection.html">Официальный пример OpenCV</a>.</p>
 <p>Готовая программа сохраняет исходный кадр, рисуя на его копии:</p>
-<pre><code class="language-bash">python examples/05_aruco.py --camera 0
+<pre><code class="language-bash">python textbook/examples/05_aruco.py --camera 0
 </code></pre>
 <p>Поднеси маркер к камере. <strong>Ожидаем:</strong> контур следует за его четырьмя сторонами, рядом виден номер <code>7</code>; если убрать маркер, контур исчезает. Не зеркаль кадр перед распознаванием: зеркальная картинка меняет код маркера.</p>
 <p>Вот реальный результат запуска того же детектора на подготовленном файле, а не снимок с физической камеры:</p>
 <p><img alt="Контур и ID распознанного маркера" src="assets/aruco_detected.png" /></p>
 <h2 id="25">2.5. Проверка без камеры</h2>
 <p>Если камера пока недоступна, проверь алгоритм на файле:</p>
-<pre><code class="language-bash">python examples/05_aruco.py --image assets/aruco_4x4_50_id7.png --no-gui
+<pre><code class="language-bash">python textbook/examples/05_aruco.py --image textbook/assets/aruco_4x4_50_id7.png --no-gui
 </code></pre>
 <p>В терминале должно быть <code>Найденные ID: [7]</code>, а результат появится в <code>assets/aruco_detected.png</code>. Это проверяет генерацию и распознавание, но не работу физической камеры или оконной системы.</p>
 <p><strong>Задание, 5 минут.</strong> Создай ID <code>12</code>, покажи камере два маркера одновременно и добейся двух контуров с правильными номерами. Затем наклони лист и постепенно отдаляй его: в какой момент распознавание пропадает? Назови два фактора, которые влияют на результат.</p>
@@ -528,9 +530,9 @@ void setup() {
 <p>В полном скетче <code>loop()</code> читает приходящие символы и накапливает строку до <code>\n</code>. Это важно: один <code>Serial.read()</code> читает <strong>один байт</strong>, а не всё слово <code>off</code>. <code>\r</code> игнорируется, чтобы работали оба варианта конца строки. Ограничение в 16 символов защищает от случайного бесконечного накопления; переполненная строка получает <code>ERR too_long</code>. Затем <code>handleCommand()</code> выбирает действие и печатает подтверждение.</p>
 <p>Сначала прочитайте полный файл скетча, затем найдите самостоятельно ветку <code>g</code> и добавьте временную команду <code>all</code>. Она должна включать все три LED и подтверждаться <code>OK all</code>. После опыта верните исходный протокол.</p>
 <h2 id="python">Python: сначала короткий опыт</h2>
-<p>Откройте терминал VS Code в окружении курса и перейдите в <code>~/CV_course/textbook</code>. Пакет называется <code>pyserial</code>, импорт — <code>serial</code>:</p>
+<p>Откройте терминал VS Code в окружении курса и перейдите в <code>~/CV_course</code>. Пакет называется <code>pyserial</code>, импорт — <code>serial</code>:</p>
 <pre><code class="language-bash">python -m pip install pyserial
-python examples/07_serial_led.py --list
+python textbook/examples/07_serial_led.py --list
 </code></pre>
 <p>Найдите свой порт по описанию и по исчезновению из списка при отключении платы. Примеры имён: <code>COM5</code> в Windows, <code>/dev/cu.usbmodem...</code> в macOS, <code>/dev/ttyACM0</code> в Linux. Многоточие нужно заменить реальным именем из списка.</p>
 <p>Суть передачи команды:</p>
@@ -545,11 +547,11 @@ with serial.Serial(&quot;COM5&quot;, baudrate=115200, timeout=1,
 <h2 id="_5">Полный пример с подтверждениями</h2>
 <p>Запустите <strong>одну</strong> команду со своим портом:</p>
 <pre><code class="language-bash"># Windows
-python examples/07_serial_led.py --port COM5
+python textbook/examples/07_serial_led.py --port COM5
 # macOS: имя только пример, замените результатом --list
-python examples/07_serial_led.py --port /dev/cu.usbmodem1101
+python textbook/examples/07_serial_led.py --port /dev/cu.usbmodem1101
 # Linux
-python examples/07_serial_led.py --port /dev/ttyACM0
+python textbook/examples/07_serial_led.py --port /dev/ttyACM0
 </code></pre>
 <p>Программа сначала повторяет <code>ping</code>, пока не получит <code>READY</code> (до 8 секунд). Такой обмен не зависит от того, успел ли компьютер поймать сообщение при запуске платы. Только после готовности начинается ввод пользователя:</p>
 <pre><code class="language-python">command = input(&quot;&gt; &quot;).strip().lower()

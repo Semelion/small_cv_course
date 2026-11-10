@@ -1,4 +1,4 @@
-"""Живое видео. Запуск: python examples/04_camera.py --camera 0"""
+"""Живое видео. Запуск: python textbook/examples/04_camera.py --camera 0"""
 import argparse
 import cv2 as cv
 

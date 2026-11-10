@@ -1,6 +1,5 @@
 """Отрисовка ArUco: камера или статическое изображение для проверки без камеры."""
 import argparse
-from pathlib import Path
 import cv2 as cv
 
 
@@ -23,20 +22,19 @@ def annotate(frame, detector):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--camera', type=int, default=0)
-    parser.add_argument('--image', type=Path, help='Проверка на файле вместо камеры')
+    parser.add_argument('--image', help='Проверка на файле вместо камеры')
     parser.add_argument('--no-gui', action='store_true', help='Только с --image: не открывать окно')
-    parser.add_argument('--output', type=Path, default=Path(__file__).resolve().parents[1] / 'assets' / 'aruco_detected.png')
+    parser.add_argument('--output', default='textbook/assets/aruco_detected.png')
     args = parser.parse_args()
     if args.no_gui and args.image is None:
         parser.error('--no-gui используется вместе с --image')
     detector = make_detector()
     if args.image is not None:
-        frame = cv.imread(str(args.image))
+        frame = cv.imread(args.image)
         if frame is None:
             raise RuntimeError(f'Не удалось прочитать изображение: {args.image}')
         result, ids = annotate(frame, detector)
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        if not cv.imwrite(str(args.output), result):
+        if not cv.imwrite(args.output, result):
             raise RuntimeError(f'Не удалось сохранить {args.output}')
         print('Найденные ID:', [] if ids is None else ids.flatten().tolist())
         print('Результат:', args.output)

@@ -1,10 +1,8 @@
-"""HSV → маска → контуры → рамки. Запуск: python examples/03_objects.py"""
-from pathlib import Path
+"""HSV → маска → контуры → рамки. Запуск: python textbook/examples/03_objects.py"""
 import argparse
 import cv2 as cv
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
@@ -12,9 +10,9 @@ def main():
     parser.add_argument('--no-gui', action='store_true')
     parser.add_argument('--clean', action='store_true', help='Убрать мелкие точки морфологическим открытием')
     args = parser.parse_args()
-    img = cv.imread(str(ROOT / 'assets/scene.png'))
+    img = cv.imread('textbook/assets/scene.png')
     if img is None:
-        raise FileNotFoundError(ROOT / 'assets/scene.png')
+        raise FileNotFoundError('textbook/assets/scene.png')
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     mask = cv.inRange(hsv, (40, 80, 60), (85, 255, 255))
     if args.clean:
@@ -38,10 +36,9 @@ def main():
                    cv.FONT_HERSHEY_SIMPLEX, 0.6, (20, 20, 20), 2, cv.LINE_AA)
         print(f'Объект {count}: area={area}, x={x}, y={y}, w={w}, h={h}')
     print('Найдено крупных зеленых объектов:', count)
-    out = ROOT / 'assets/generated'
-    out.mkdir(exist_ok=True, parents=True)
+    out = 'textbook/assets/generated'
     for name, image in [('mask', mask), ('selected', selected), ('overlay', overlay), ('objects', result)]:
-        if not cv.imwrite(str(out / f'{name}.png'), image):
+        if not cv.imwrite(f'{out}/{name}.png', image):
             raise OSError(f'Не удалось сохранить {name}')
         if not args.no_gui:
             cv.imshow(name, image)

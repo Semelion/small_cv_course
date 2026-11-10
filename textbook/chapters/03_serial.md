@@ -80,11 +80,11 @@ void setup() {
 
 ## Python: сначала короткий опыт
 
-Откройте терминал VS Code в окружении курса и перейдите в `~/CV_course/textbook`. Пакет называется `pyserial`, импорт — `serial`:
+Откройте терминал VS Code в окружении курса и перейдите в `~/CV_course`. Пакет называется `pyserial`, импорт — `serial`:
 
 ```bash
 python -m pip install pyserial
-python examples/07_serial_led.py --list
+python textbook/examples/07_serial_led.py --list
 ```
 
 Найдите свой порт по описанию и по исчезновению из списка при отключении платы. Примеры имён: `COM5` в Windows, `/dev/cu.usbmodem...` в macOS, `/dev/ttyACM0` в Linux. Многоточие нужно заменить реальным именем из списка.
@@ -108,11 +108,11 @@ with serial.Serial("COM5", baudrate=115200, timeout=1,
 
 ```bash
 # Windows
-python examples/07_serial_led.py --port COM5
+python textbook/examples/07_serial_led.py --port COM5
 # macOS: имя только пример, замените результатом --list
-python examples/07_serial_led.py --port /dev/cu.usbmodem1101
+python textbook/examples/07_serial_led.py --port /dev/cu.usbmodem1101
 # Linux
-python examples/07_serial_led.py --port /dev/ttyACM0
+python textbook/examples/07_serial_led.py --port /dev/ttyACM0
 ```
 
 Программа сначала повторяет `ping`, пока не получит `READY` (до 8 секунд). Такой обмен не зависит от того, успел ли компьютер поймать сообщение при запуске платы. Только после готовности начинается ввод пользователя:

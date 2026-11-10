@@ -31,13 +31,11 @@ python -m pip install opencv-contrib-python numpy pyserial
 Создайте `my_first.py` прямо в `CV_course`, рядом с изображением `civic.jpeg`. Наберите:
 
 ```python
-from pathlib import Path
 import cv2 as cv
 
-path = Path(__file__).resolve().parent / "civic.jpeg"
-img = cv.imread(str(path))
+img = cv.imread("civic.jpeg")
 if img is None:
-    raise FileNotFoundError(f"Не удалось открыть: {path}")
+    raise FileNotFoundError("Не найден civic.jpeg. Запускайте программу из папки CV_course.")
 
 print("Размер и каналы:", img.shape)
 print("Тип значений:", img.dtype)
@@ -52,7 +50,7 @@ cv.destroyAllWindows()
 python my_first.py
 ```
 
-`import` подключает библиотеку; `as cv` даёт ей короткое имя. `img` — переменная с массивом изображения. `print` выводит текст в терминал, `imshow` открывает отдельное окно. `waitKey(0)` ждёт клавишу **в окне изображения**. После неё программа закрывает окна. `Path(__file__)` привязывает путь к месту хранения скрипта.
+`import` подключает библиотеку; `as cv` даёт ей короткое имя. `img` — переменная с массивом изображения. `print` выводит текст в терминал, `imshow` открывает отдельное окно. `waitKey(0)` ждёт клавишу **в окне изображения**. После неё программа закрывает окна. Путь `"civic.jpeg"` — обычная строка. Python ищет файл в текущей папке терминала: в этом курсе это `CV_course`.
 
 Запускайте весь `.py` через терминал или **Run Python File in Terminal**. Кнопка расширения Code Runner может использовать другой Python; не смешивайте способы запуска, пока не убедились, что окружения совпадают. Для программ с `input()` нужен терминал, а не панель Output.
 
@@ -78,3 +76,15 @@ if width > 100:
 ## Как работать с ошибкой
 
 Сначала прочитайте последнюю строку traceback, затем найдите указанный номер строки в своём `.py`. `ModuleNotFoundError` обычно означает неверное окружение или отсутствующий пакет; `FileNotFoundError` — путь; `IndexError` — выход за размер матрицы; `IndentationError` — отступы. Если программа ждёт клавишу, переключитесь в окно OpenCV. Остановить скрипт в терминале можно `Ctrl+C`.
+
+## Одна папка для всех запусков
+
+Все команды учебника выполняйте из папки **CV_course**, не из `textbook` или `examples`. В VS Code откройте именно CV_course и новый терминал. На macOS/Linux выполните `cd ~/CV_course`; на Windows — `cd C:/ваш/путь/CV_course`. Проверьте командой `pwd` (PowerShell тоже поддерживает её), что вы в нужной папке.
+
+Путь записываем прямо в строке:
+
+```python
+img = cv.imread("textbook/assets/scene.png")
+```
+
+Можно указать полный путь к своему файлу, например `cv.imread("C:/Users/Student/Pictures/photo.jpg")` или `cv.imread("/Users/student/Pictures/photo.jpg")`. Замените пример своим путём. На Windows удобно использовать `/`, чтобы не экранировать обратные слеши. При ошибке проверьте имя, расширение и расположение файла.
