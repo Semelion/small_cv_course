@@ -20,7 +20,8 @@
 <li><code>chapters/</code> — исходный текст учебника с фрагментами кода.</li>
 <li><code>CHECKS.md</code> — что проверено программно и что требует оборудования.</li>
 </ul>
-<p>Примеры используют обычные строки с путями. Все программы запускайте из папки <code>CV_course</code>: например, <code>python textbook/examples/01_pixels.py</code>. Папка <code>textbook/assets/generated</code> уже входит в комплект. Исходные <code>test.py</code> и <code>civic.jpeg</code> лежат в CV_course.</p></section><section id="00_start"><h1 id="0">0. От открытого изображения к своей программе</h1>
+<p>Примеры используют обычные строки с путями. Все программы запускайте из папки <code>CV_course</code>: например, <code>python textbook/examples/01_pixels.py</code>. Папка <code>textbook/assets/generated</code> уже входит в комплект. Исходные <code>test.py</code> и <code>civic.jpeg</code> лежат в CV_course.</p>
+<p>Учебные Python-программы выполняются сверху вниз. Своих функций, обработки параметров командной строки и блока <code>if __name__ == "__main__"</code> в них нет. Все настройки меняем прямо в строках кода. Служебная папка <code>tools</code> нужна только преподавателю для сборки сайта.</p></section><section id="00_start"><h1 id="0">0. От открытого изображения к своей программе</h1>
 <p>Вы уже запустили <code>cv.imread()</code> и увидели картинку. Теперь будем менять её содержимое. Не нужно переустанавливать весь стек: сначала убедитесь, что VS Code запускает тот Python, в котором установлены библиотеки.</p>
 <h2 id="01">0.1. Рабочее место</h2>
 <ol>
@@ -173,7 +174,8 @@ for y in range(height):
 </code></pre>
 <p><code>range(height)</code> перебирает номера строк; для каждой строки внутренний цикл перебирает все столбцы. Отступы задают вложенность: последняя строка выполняется для каждого пикселя. Мы сохраняем B и G, а R увеличиваем на 60. <code>int(r)</code> сначала переводит значение в обычное целое Python; <code>min(255, ...)</code> ограничивает результат. Например, из R=220 получается 255, а не число за пределами <code>uint8</code>.</p>
 <p><img alt="Красный оттенок добавлен ко всем пикселям" src="assets/generated/tinted.png" /></p>
-<p>Цикл нужен, чтобы понять устройство картинки. Для больших изображений используем операцию над целым каналом NumPy:</p>
+<h3 id="_2">Дополнительно: ускоряем обработку</h3>
+<p>Этот фрагмент можно оставить на консультацию; в основном скрипте используется понятный цикл. Для больших изображений применяют операцию над целым каналом NumPy:</p>
 <pre><code class="language-python">import numpy as np
 
 fast = img.copy()
@@ -226,21 +228,23 @@ for contour in contours:
     count += 1
     x, y, w, h = cv.boundingRect(contour)
     cv.rectangle(result, (x, y), (x + w - 1, y + h - 1), (0, 200, 255), 3)
-    cv.putText(result, f'green {count}: {area:.0f}', (x, max(20, y - 10)),
+    cv.putText(result, 'green ' + str(count), (x, y - 10),
                cv.FONT_HERSHEY_SIMPLEX, 0.6, (20, 20, 20), 2, cv.LINE_AA)
 </code></pre>
 <p>Контур описывает границу белой области. <code>RETR_EXTERNAL</code> берет только внешние границы, <code>CHAIN_APPROX_SIMPLE</code> сокращает лишние точки на прямых участках. На вход передаем бинарную маску, не цветное изображение. <code>hierarchy</code> содержит отношения контуров; в этой задаче она не нужна.</p>
 <p><code>contourArea</code> вычисляет геометрическую площадь контура в квадратных пикселях: это не обязательно точное число белых пикселей. <code>continue</code> пропускает мелкие точки. Порог 500 подобран для учебной картинки и при другом масштабе может потребовать изменения.</p>
 <p><code>boundingRect</code> возвращает левый верхний угол <code>(x, y)</code> и размеры <code>(w, h)</code>. В функции рисования точки задаются в порядке <strong>(x, y)</strong>, тогда как доступ к массиву был <strong>[y, x]</strong>. Конечная точка рамки — <code>(x + w - 1, y + h - 1)</code>, чтобы соответствовать пикселям области.</p>
 <p><code>putText</code> рисует строку на изображении. Точка задает начало строки на ее базовой линии. <code>0.6</code> — масштаб шрифта, <code>2</code> — толщина, <code>LINE_AA</code> сглаживает края. Стандартный шрифт OpenCV плохо подходит для кириллицы, поэтому здесь подписи латиницей. Функции рисования изменяют переданное изображение; работаем с <code>result</code>, сохраняя оригинал.</p>
-<p><img alt="Два зеленых объекта с рамками и подписями площадей" src="assets/generated/objects.png" /></p>
+<p><img alt="Два зеленых объекта с рамками и подписями" src="assets/generated/objects.png" /></p>
 <p><strong>Ожидаемый результат:</strong> две рамки. Для прямоугольника площадь контура 19200, рамка <code>(80, 100, 161, 121)</code>; для круга площадь 5406, рамка <code>(508, 258, 85, 85)</code>. Порядок обхода контуров не является устойчивым ID объекта.</p>
 <h2 id="8">8. Дополнительно: очищаем маску</h2>
 <p>Мелкие точки можно убрать до поиска контуров:</p>
-<pre><code class="language-python">kernel = np.ones((5, 5), np.uint8)
+<pre><code class="language-python">import numpy as np
+
+kernel = np.ones((5, 5), np.uint8)
 mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
 </code></pre>
-<p>Морфологическое открытие сначала сужает белые области, затем расширяет их. Тонкие помехи исчезают, но реальные маленькие объекты тоже могут потеряться. Это отдельный прием; для основной задачи достаточно фильтра по площади. В готовом скрипте опция <code>--clean</code> включает эту обработку.</p>
+<p>Морфологическое открытие сначала сужает белые области, затем расширяет их. Тонкие помехи исчезают, но реальные маленькие объекты тоже могут потеряться. Это отдельный прием; для основной задачи достаточно фильтра по площади. Чтобы попробовать, добавь этот фрагмент после создания маски, перед поиском контуров.</p>
 <h2 id="9">9. Самостоятельная работа и контроль</h2>
 <ol>
 <li>Измени программу так, чтобы искать только синий прямоугольник, подписывая его <code>blue</code>.</li>
@@ -248,12 +252,12 @@ mask = cv.morphologyEx(mask, cv.MORPH_OPEN, kernel)
 <li>Сохрани результат через <code>cv.imwrite('my_result.png', result)</code> и найди файл в текущей папке терминала.</li>
 <li>Заменив учебную сцену своей фотографией, подбери цветовые границы. Для существующего <code>civic.jpeg</code> напиши <code>img = cv.imread("civic.jpeg")</code>, запуская из CV_course. Рамка по цвету выделит цветную область, но сама по себе не распознает автомобиль как смысловой объект.</li>
 </ol>
-<p>Для проверки без окон из папки <code>CV_course</code>:</p>
-<pre><code class="language-sh">python textbook/examples/01_pixels.py --no-gui
-python textbook/examples/02_colors.py --no-gui
-python textbook/examples/03_objects.py --no-gui
+<p>Запускай готовые примеры по очереди из папки <code>CV_course</code>:</p>
+<pre><code class="language-sh">python textbook/examples/01_pixels.py
+python textbook/examples/02_colors.py
+python textbook/examples/03_objects.py
 </code></pre>
-<p>Результаты записываются в <code>textbook/assets/generated</code>. Повторный запуск обновляет соответствующие PNG. <code>--no-gui</code> нужен для проверки кода без графического окна; на занятии запускай без него.</p>
+<p>Результаты записываются в <code>textbook/assets/generated</code>. Повторный запуск обновляет соответствующие PNG. Чтобы завершить пример, щелкни по окну OpenCV и нажми любую клавишу.</p>
 <p><strong>Можешь объяснить своими словами?</strong> Почему <code>img[20, 80]</code> и <code>(80, 20)</code> описывают один пиксель? Почему нужен <code>copy()</code>? Чем HSV отличается от маски? Почему зеленая пыль не получила рамку? Какие параметры надо менять при переходе к реальной фотографии?</p>
 <h2 id="-">Если что-то пошло не так</h2>
 <table>
@@ -300,30 +304,35 @@ python textbook/examples/03_objects.py --no-gui
 </table>
 <p>Описание API сверено с официальными материалами OpenCV: <a href="https://docs.opencv.org/4.x/d3/df2/tutorial_py_basic_ops.html">операции с изображениями</a>, <a href="https://docs.opencv.org/4.11.0/df/d9d/tutorial_py_colorspaces.html">цветовые пространства</a>, <a href="https://docs.opencv.org/4.x/da/d97/tutorial_threshold_inRange.html">inRange</a>, <a href="https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html">свойства контуров</a>, <a href="https://docs.opencv.org/4.x/dc/da5/tutorial_py_drawing_functions.html">рисование</a>. Иллюстрации созданы для курса; это результаты прилагаемых программ на синтетической сцене.</p></section><section id="02_camera_aruco"><h1 id="2-aruco">2. Камера и ArUco: от картинки к потоку</h1>
 <p><strong>Цель:</strong> показать живое видео, найти квадратный маркер и обвести его границу с ID. На эту часть второй пары отведём 35 минут: 15 минут на камеру и 20 на маркеры.</p>
-<p>Команды ниже запускаем из <code>CV_course</code> в терминале VS Code, с тем же Python, которым открывали картинку. Полные программы лежат в <code>examples</code>; фрагменты в тексте показывают главное.</p>
+<p>Команды ниже запускаем из <code>CV_course</code> в терминале VS Code, с тем же Python, которым открывали картинку. Полные программы лежат в <code>textbook/examples</code>; фрагменты в тексте показывают главное.</p>
 <h2 id="21">2.1. Кадр — та же матрица</h2>
 <p>В фотографии матрица загружается один раз. В видео камера выдаёт новую матрицу на каждой итерации цикла. Значит, уже знакомые обрезка, маска, контуры и надписи применимы и к кадру.</p>
 <pre><code class="language-python">import cv2 as cv
 
-cap = cv.VideoCapture(0)
-try:
-    if not cap.isOpened():
-        raise RuntimeError('Камера не открылась')
-    while True:
-        ok, frame = cap.read()
-        if not ok:
-            raise RuntimeError('Кадр не получен')
-        cv.imshow('Camera', frame)
-        if cv.waitKey(1) &amp; 0xFF in (ord('q'), 27):
-            break
-finally:
-    cap.release()
-    cv.destroyAllWindows()
+camera = 0
+cap = cv.VideoCapture(camera)
+
+if not cap.isOpened():
+    print('Камера не открылась. Проверь доступ к камере или измени camera на 1.')
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        print('Не удалось получить кадр.')
+        break
+
+    cv.imshow('Camera', frame)
+    key = cv.waitKey(1) &amp; 0xFF
+    if key == ord('q') or key == 27:
+        break
+
+cap.release()
+cv.destroyAllWindows()
 </code></pre>
-<p><code>0</code> — индекс камеры, а не номер USB-порта. <code>read()</code> возвращает два значения: получилось ли чтение и сам кадр. Сначала проверяем <code>ok</code>, затем используем <code>frame</code>. <code>while True</code> повторяет чтение, а <code>break</code> завершает цикл. Блок <code>finally</code> освобождает камеру даже при ошибке.</p>
+<p><code>0</code> — индекс камеры, а не номер USB-порта. <code>read()</code> возвращает два значения: получилось ли чтение и сам кадр. Сначала проверяем <code>ret</code>, затем используем <code>frame</code>. Цикл <code>while cap.isOpened()</code> повторяет чтение, пока камера открыта, а <code>break</code> завершает цикл. После цикла <code>release()</code> освобождает камеру, а <code>destroyAllWindows()</code> закрывает окна. Чтобы выбрать другую камеру, поменяй <code>camera = 0</code> на <code>camera = 1</code> прямо в коде.</p>
 <p><code>waitKey(1)</code> позволяет окну обновляться и обрабатывает клавиши; это не обещание частоты 1000 кадров/с. Задержка <code>0</code>, знакомая по статической картинке, остановила бы цикл до нажатия клавиши. Для выхода нажми <strong>Q в английской раскладке или Esc</strong>, когда окно видео активно. <a href="https://docs.opencv.org/4.x/dd/d43/tutorial_py_video_display.html">Документация OpenCV о видео</a>.</p>
 <p>Запусти готовую программу:</p>
-<pre><code class="language-bash">python textbook/examples/04_camera.py --camera 0
+<pre><code class="language-bash">python textbook/examples/04_camera.py
 </code></pre>
 <p><strong>Ожидаем:</strong> открывается окно, движения отображаются непрерывно, Esc закрывает окно и освобождает камеру.</p>
 <p><strong>Попробуй сам, 3 минуты.</strong> Перед <code>imshow</code> вставь:</p>
@@ -336,20 +345,22 @@ cv.imshow('Gray', gray)
 <p>В этом упражнении результат — четыре угла и ID. Мы только рисуем найденные маркеры; расстояние, пространственное положение и калибровку камеры не рассматриваем.</p>
 <h2 id="23">2.3. Сначала изготовим маркер</h2>
 <p>Запусти:</p>
-<pre><code class="language-bash">python textbook/examples/06_make_marker.py --id 7
+<pre><code class="language-bash">python textbook/examples/06_make_marker.py
 </code></pre>
-<p>Получится <code>assets/aruco_4x4_50_id7.png</code>:</p>
+<p>Получится <code>textbook/assets/aruco_4x4_50_id7.png</code>:</p>
 <p><img alt="Маркер DICT_4X4_50, ID 7, с белым полем" src="assets/aruco_4x4_50_id7.png" /></p>
 <p>Распечатай его на белой бумаге или покажи на другом экране. Не обрезай белое поле и чёрную рамку. При демонстрации с экрана избегай бликов и слишком маленького размера.</p>
 <p>Главные строки генератора:</p>
-<pre><code class="language-python">dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
-marker = cv.aruco.generateImageMarker(dictionary, 7, 300)
+<pre><code class="language-python">marker_id = 7
+output = 'textbook/assets/aruco_4x4_50_id7.png'
+dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
+marker = cv.aruco.generateImageMarker(dictionary, marker_id, 300)
 printable = cv.copyMakeBorder(
     marker, 60, 60, 60, 60, cv.BORDER_CONSTANT, value=255
 )
-cv.imwrite('marker.png', printable)
+cv.imwrite(output, printable)
 </code></pre>
-<p>Здесь <code>300</code> — размер стороны в пикселях. Функция <code>copyMakeBorder</code> добавляет по 60 белых пикселей с каждой стороны. Генератор в комплекте сохраняет файл в папку <code>assets</code>, независимо от текущей рабочей папки.</p>
+<p>Здесь <code>300</code> — размер стороны в пикселях. Функция <code>copyMakeBorder</code> добавляет по 60 белых пикселей с каждой стороны. Путь <code>output</code> считается от папки <code>CV_course</code>, поэтому запускай программу из неё. Для другого маркера поменяй <code>marker_id</code> на число от 0 до 49 и имя файла в <code>output</code>, чтобы сохранить оба изображения.</p>
 <h2 id="24">2.4. Детектор создаём один раз, ищем в каждом кадре</h2>
 <p>Перед циклом камеры подготовь словарь и детектор:</p>
 <pre><code class="language-python">dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
@@ -363,18 +374,14 @@ if ids is not None:
 cv.imshow('ArUco', frame)
 </code></pre>
 <p><code>corners</code> содержит углы распознанных маркеров, <code>ids</code> — их номера. Когда распознанных маркеров нет, <code>ids</code> равно <code>None</code>: это обычный результат, а не ошибка. <code>rejected</code> — кандидаты, не прошедшие проверку; в уроке их не используем. <code>drawDetectedMarkers</code> изменяет переданное изображение, обводит маркеры и подписывает ID. <a href="https://docs.opencv.org/4.12.0/d5/dae/tutorial_aruco_detection.html">Официальный пример OpenCV</a>.</p>
-<p>Готовая программа сохраняет исходный кадр, рисуя на его копии:</p>
-<pre><code class="language-bash">python textbook/examples/05_aruco.py --camera 0
+<p>Готовая программа рисует контур прямо на текущем кадре:</p>
+<pre><code class="language-bash">python textbook/examples/05_aruco.py
 </code></pre>
 <p>Поднеси маркер к камере. <strong>Ожидаем:</strong> контур следует за его четырьмя сторонами, рядом виден номер <code>7</code>; если убрать маркер, контур исчезает. Не зеркаль кадр перед распознаванием: зеркальная картинка меняет код маркера.</p>
 <p>Вот реальный результат запуска того же детектора на подготовленном файле, а не снимок с физической камеры:</p>
 <p><img alt="Контур и ID распознанного маркера" src="assets/aruco_detected.png" /></p>
-<h2 id="25">2.5. Проверка без камеры</h2>
-<p>Если камера пока недоступна, проверь алгоритм на файле:</p>
-<pre><code class="language-bash">python textbook/examples/05_aruco.py --image textbook/assets/aruco_4x4_50_id7.png --no-gui
-</code></pre>
-<p>В терминале должно быть <code>Найденные ID: [7]</code>, а результат появится в <code>assets/aruco_detected.png</code>. Это проверяет генерацию и распознавание, но не работу физической камеры или оконной системы.</p>
-<p><strong>Задание, 5 минут.</strong> Создай ID <code>12</code>, покажи камере два маркера одновременно и добейся двух контуров с правильными номерами. Затем наклони лист и постепенно отдаляй его: в какой момент распознавание пропадает? Назови два фактора, которые влияют на результат.</p>
+<h2 id="25">2.5. Самостоятельная практика</h2>
+<p><strong>Задание, 5 минут.</strong> В <code>06_make_marker.py</code> измени <code>marker_id = 7</code> на <code>marker_id = 12</code> и имя файла в <code>output</code> на <code>textbook/assets/aruco_4x4_50_id12.png</code>. Запусти генератор, покажи камере два маркера одновременно и добейся двух контуров с правильными номерами. Затем наклони лист и постепенно отдаляй его: в какой момент распознавание пропадает? Назови два фактора, которые влияют на результат.</p>
 <p><strong>Проверка понимания:</strong> где создаётся детектор — до цикла или внутри? Почему надо проверять <code>ids is not None</code>? Что случится, если словари генератора и детектора различаются?</p>
 <h2 id="-">Если что-то не работает</h2>
 <table>
@@ -387,7 +394,7 @@ cv.imshow('ArUco', frame)
 <tbody>
 <tr>
 <td>Камера не открывается</td>
-<td>Закрыть видеосвязь и другие приложения с камерой, разрешить доступ для приложения, из которого запущен Python; попробовать <code>--camera 1</code>.</td>
+<td>Закрыть видеосвязь и другие приложения с камерой, разрешить доступ для приложения, из которого запущен Python; поменять <code>camera = 0</code> на <code>camera = 1</code> в программе.</td>
 </tr>
 <tr>
 <td>Окно не отвечает</td>
@@ -412,19 +419,19 @@ cv.imshow('ArUco', frame)
 </tbody>
 </table>
 <p>Для единого окружения курса выбран пакет <strong><code>opencv-contrib-python</code></strong>. Это одна поставка <code>cv2</code>; не устанавливай рядом <code>opencv-python</code>, <code>opencv-python-headless</code> или <code>opencv-contrib-python-headless</code>. В современных версиях ArUco может присутствовать и в основной сборке, но смешивать пакеты нельзя: они используют одно имя <code>cv2</code>. Если проверка API проходит, переустановка не нужна. Если обнаружены конфликтующие pip-пакеты, преподаватель поможет удалить дубликаты и оставить одну оконную поставку.</p>
-<p>Если OpenCV был установлен через conda, используй отдельное окружение курса по инструкции из начала учебника, чтобы не смешивать менеджеры для одной библиотеки. <a href="https://github.com/opencv/opencv-python#installation-and-usage">Правила установки от сопровождающих пакета</a>.</p></section><section id="03_serial"><h1 id="3">3. Компьютер посылает команду — плата включает светодиод</h1>
-<p>Цель: в терминале компьютера ввести <code>r</code>, <code>g</code> или <code>b</code> и увидеть соответствующий светодиод. В каждый момент горит только один. <code>off</code> гасит все; <code>q</code> гасит их и завершает программу. Это отдельное упражнение: распознавание объектов здесь ещё не управляет платой.</p>
-<h2 id="_1">Подготовка преподавателя и схема</h2>
-<p>RP2040 — название микроконтроллера, а не конкретной платы. <strong>В этом примере эталонная плата — обычная Raspberry Pi Pico</strong>, Arduino framework, core <strong>Arduino-Pico от Earle Philhower</strong>. Для другой платы сначала сверяем распиновку и выбранную модель в IDE. Наличие встроенного RGB-светодиода не предполагается.</p>
-<p>Нужны USB-кабель с передачей данных, макетная плата, три обычных светодиода R/G/B, три резистора 220–330 Ом (в схеме 330 Ом) и провода. Перед сборкой отключите питание. Каждый анод подключаем к своему GPIO <strong>через свой резистор</strong>, каждый катод — к GND. Обычно анод — длинная ножка, катод — короткая ножка и плоская сторона корпуса; при обрезанных ножках уточните маркировку. Не соединяйте GPIO с 5 В: здесь логика 3,3 В.</p>
-<p><img alt="Схема трёх отдельных светодиодов" src="assets/serial_wiring.svg" /></p>
+<p>Если OpenCV был установлен через conda, используй отдельное окружение курса по инструкции из начала учебника, чтобы не смешивать менеджеры для одной библиотеки. <a href="https://github.com/opencv/opencv-python#installation-and-usage">Правила установки от сопровождающих пакета</a>.</p></section><section id="03_serial"><h1 id="3">3. Зажигаем светодиод с компьютера</h1>
+<p>Введём в Python букву <code>r</code>, <code>g</code> или <code>b</code>, а плата зажжёт красный, зелёный или синий светодиод. <code>off</code> выключит все светодиоды. <code>q</code> выключит их и завершит программу.</p>
+<h2 id="_1">Собираем схему</h2>
+<p>В примере используется <strong>обычная Raspberry Pi Pico с RP2040</strong> и три отдельных внешних светодиода. У другой платы на RP2040 расположение контактов может отличаться. Встроенный RGB здесь не используется.</p>
+<p>Нужны три LED, три резистора 220–330 Ом (на рисунке 330 Ом), провода, макетная плата и USB-кабель с передачей данных. Собирайте схему при отключённом питании. У каждого LED должен быть <strong>свой резистор</strong>.</p>
+<p><img alt="Три светодиода подключены к Pico" src="assets/serial_wiring.svg" /></p>
 <table>
 <thead>
 <tr>
 <th>Цвет</th>
-<th style="text-align: right;">GPIO в коде</th>
+<th style="text-align: right;">GPIO в программе</th>
 <th style="text-align: right;">Физический контакт обычного Pico</th>
-<th>Цепочка</th>
+<th>Подключение</th>
 </tr>
 </thead>
 <tbody>
@@ -432,189 +439,149 @@ cv.imshow('ArUco', frame)
 <td>Красный</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">4</td>
-<td>GP2 → резистор → анод R → катод → GND</td>
+<td>GP2 → резистор → анод LED</td>
 </tr>
 <tr>
 <td>Зелёный</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">5</td>
-<td>GP3 → резистор → анод G → катод → GND</td>
+<td>GP3 → резистор → анод LED</td>
 </tr>
 <tr>
 <td>Синий</td>
 <td style="text-align: right;">4</td>
 <td style="text-align: right;">6</td>
-<td>GP4 → резистор → анод B → катод → GND</td>
+<td>GP4 → резистор → анод LED</td>
 </tr>
 <tr>
 <td>Общая земля</td>
 <td style="text-align: right;">GND</td>
 <td style="text-align: right;">3</td>
-<td>Общая точка катодов</td>
+<td>Все катоды → GND</td>
 </tr>
 </tbody>
 </table>
-<p>Числа <code>2</code>, <code>3</code>, <code>4</code> в скетче — <strong>GPIO, не порядковые номера ножек</strong>. Схема условная и не изображает физическое расположение контактов: при сборке используйте <a href="https://www.raspberrypi.com/documentation/microcontrollers/pico-series.html">официальную распиновку Pico</a>. Для RGB с общим катодом идея аналогична, но распиновку корпуса нужно проверить. Для общего анода нужна другая схема и обратная логика; адресные WS2812 требуют отдельной библиотеки. На занятии используем три отдельных LED.</p>
-<h2 id="_2">Прошиваем плату один раз</h2>
-<p>Откройте Arduino IDE. В настройках добавьте в «Additional Boards Manager URLs» адрес:</p>
+<p>Обычно длинная ножка LED — анод (+), короткая — катод (−). Если ножки обрезаны, проверьте маркировку. <strong>Номер GPIO не равен номеру физического контакта.</strong> Сверяйтесь с <a href="https://www.raspberrypi.com/documentation/microcontrollers/pico-series.html">распиновкой Pico</a>. Логика GPIO — 3,3 В; не подавайте на GPIO 5 В.</p>
+<p>Схема рассчитана на отдельные LED. RGB с общим анодом требует другого подключения и обратной логики; адресный WS2812 — другой программы. Для урока используем именно три обычных LED.</p>
+<h2 id="arduino">Загружаем программу Arduino</h2>
+<p>Используем Arduino framework и пакет плат <strong>Arduino-Pico от Earle Philhower</strong>. В настройках Arduino IDE добавьте адрес в Additional Boards Manager URLs:</p>
 <pre><code class="language-text">https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
 </code></pre>
-<p>В менеджере плат установите пакет Raspberry Pi Pico/RP2040/RP2350 от Earle Philhower. Выберите свою плату (для этой схемы — Raspberry Pi Pico), USB Stack оставьте стандартным Arduino. Откройте <code>textbook/arduino/rgb_serial/rgb_serial.ino</code>. При первом подключении удерживайте BOOTSEL, подключите USB и отпустите кнопку; выберите UF2 Board, если IDE предлагает такой порт, и нажмите Upload. После загрузки выберите появившийся последовательный порт. Подробности и отличия версий IDE — в <a href="https://arduino-pico.readthedocs.io/en/stable/install.html">инструкции установки Arduino-Pico</a>.</p>
-<p>Проверьте в Serial Monitor: скорость 115200, конец строки Newline. Введите <code>ping</code>: ожидается <code>READY</code>; введите <code>r</code>: ожидается <code>OK r</code>, горит красный. Затем <strong>закройте Serial Monitor</strong>, прежде чем запускать Python: одновременно портом должна пользоваться одна программа.</p>
-<h2 id="_3">Договоримся о сообщениях</h2>
-<p>Компьютер передаёт текстовые строки, каждая заканчивается <code>\n</code>. Плата отвечает одной строкой. Это наш небольшой протокол.</p>
-<table>
-<thead>
-<tr>
-<th>От компьютера</th>
-<th>От платы</th>
-<th>Действие</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ping\n</code></td>
-<td><code>READY</code></td>
-<td>Проверить готовность, не менять LED</td>
-</tr>
-<tr>
-<td><code>r\n</code></td>
-<td><code>OK r</code></td>
-<td>Только красный</td>
-</tr>
-<tr>
-<td><code>g\n</code></td>
-<td><code>OK g</code></td>
-<td>Только зелёный</td>
-</tr>
-<tr>
-<td><code>b\n</code></td>
-<td><code>OK b</code></td>
-<td>Только синий</td>
-</tr>
-<tr>
-<td><code>off\n</code></td>
-<td><code>OK off</code></td>
-<td>Погасить всё</td>
-</tr>
-<tr>
-<td>Другая строка</td>
-<td><code>ERR command</code></td>
-<td>Сохранить предыдущее состояние</td>
-</tr>
-</tbody>
-</table>
-<p><code>q</code> обрабатывает только Python: отправляет <code>off</code>, затем закрывает порт. На плату <code>q</code> не передаётся.</p>
-<p>Обе стороны указывают <strong>115200</strong>. В этом уроке связь идёт по USB через объект Arduino <code>Serial</code>. Для USB CDC в выбранном core значение baud не определяет физическую скорость USB, но мы сохраняем согласованные настройки. Аппаратные <code>Serial1</code>/<code>Serial2</code> — UART на GPIO, и там baud уже задаёт реальную скорость. <a href="https://arduino-pico.readthedocs.io/en/stable/serial.html">Документация Serial Arduino-Pico</a>.</p>
-<h2 id="_4">Как устроен скетч</h2>
-<p>Arduino выполняет <code>setup()</code> один раз, <code>loop()</code> — постоянно. Настройка выходов:</p>
-<pre><code class="language-cpp">const int RED_PIN = 2;
-const int GREEN_PIN = 3;
-const int BLUE_PIN = 4;
-
-void setLeds(bool red, bool green, bool blue) {
-  digitalWrite(RED_PIN, red ? HIGH : LOW);
-  digitalWrite(GREEN_PIN, green ? HIGH : LOW);
-  digitalWrite(BLUE_PIN, blue ? HIGH : LOW);
-}
-
-void setup() {
-  pinMode(RED_PIN, OUTPUT);
-  pinMode(GREEN_PIN, OUTPUT);
-  pinMode(BLUE_PIN, OUTPUT);
-  setLeds(false, false, false);
+<p>Установите пакет плат через Boards Manager и выберите Raspberry Pi Pico (или точную модель своей платы). Оставьте стандартный USB Stack Arduino. Откройте <code>arduino/rgb_serial/rgb_serial.ino</code> из папки учебника.</p>
+<p>Для первой загрузки удерживайте BOOTSEL при подключении USB, затем отпустите кнопку. Выберите UF2 Board, если он предлагается в меню порта, и нажмите Upload. После загрузки выберите появившийся последовательный порт. <a href="https://arduino-pico.readthedocs.io/en/stable/install.html">Инструкция Arduino-Pico</a>.</p>
+<p>В Arduino нужны две обязательные функции: <strong><code>setup()</code> и <code>loop()</code></strong>. Их вызывает сам framework: <code>setup()</code> один раз после включения, а <code>loop()</code> — снова и снова. Других функций в нашем скетче нет.</p>
+<pre><code class="language-cpp">void setup() {
+  pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
+  digitalWrite(2, LOW);
+  digitalWrite(3, LOW);
+  digitalWrite(4, LOW);
   Serial.begin(115200);
+  Serial.setTimeout(100);
 }
 </code></pre>
-<p><code>true</code> включает канал, <code>false</code> выключает. Выражение <code>red ? HIGH : LOW</code> выбирает HIGH при <code>true</code> и LOW иначе. Команда <code>r</code> вызывает <code>setLeds(true, false, false)</code>, поэтому предыдущий цвет автоматически гаснет.</p>
-<p>В полном скетче <code>loop()</code> читает приходящие символы и накапливает строку до <code>\n</code>. Это важно: один <code>Serial.read()</code> читает <strong>один байт</strong>, а не всё слово <code>off</code>. <code>\r</code> игнорируется, чтобы работали оба варианта конца строки. Ограничение в 16 символов защищает от случайного бесконечного накопления; переполненная строка получает <code>ERR too_long</code>. Затем <code>handleCommand()</code> выбирает действие и печатает подтверждение.</p>
-<p>Сначала прочитайте полный файл скетча, затем найдите самостоятельно ветку <code>g</code> и добавьте временную команду <code>all</code>. Она должна включать все три LED и подтверждаться <code>OK all</code>. После опыта верните исходный протокол.</p>
-<h2 id="python">Python: сначала короткий опыт</h2>
-<p>Откройте терминал VS Code в окружении курса и перейдите в <code>~/CV_course</code>. Пакет называется <code>pyserial</code>, импорт — <code>serial</code>:</p>
-<pre><code class="language-bash">python -m pip install pyserial
-python textbook/examples/07_serial_led.py --list
+<p><code>OUTPUT</code> делает контакт выходом. <code>HIGH</code> включает LED, <code>LOW</code> выключает. Вначале все LED выключены. <code>Serial.begin(115200)</code> запускает связь. <code>setTimeout(100)</code> ограничивает ожидание недостающих символов 100 миллисекундами.</p>
+<p>Внутри <code>loop()</code> проверяем, пришли ли данные, и читаем строку:</p>
+<pre><code class="language-cpp">if (Serial.available() &gt; 0) {
+  String command = Serial.readStringUntil('\n');
+  command.trim();
+  // Дальше сравниваем command с r, g, b и off.
+}
 </code></pre>
-<p>Найдите свой порт по описанию и по исчезновению из списка при отключении платы. Примеры имён: <code>COM5</code> в Windows, <code>/dev/cu.usbmodem...</code> в macOS, <code>/dev/ttyACM0</code> в Linux. Многоточие нужно заменить реальным именем из списка.</p>
-<p>Суть передачи команды:</p>
-<pre><code class="language-python">import serial
+<p><code>\n</code> — конец строки. <code>trim()</code> убирает пробелы и служебные символы по краям. Для красного цвета выполняется такая ветка:</p>
+<pre><code class="language-cpp">if (command == &quot;r&quot;) {
+  digitalWrite(2, HIGH);
+  digitalWrite(3, LOW);
+  digitalWrite(4, LOW);
+  Serial.println(&quot;OK r&quot;);
+}
+</code></pre>
+<p>Остальные ветки найдите в полном скетче: они явно включают нужный GPIO и выключают два других. Ответ <code>OK r</code> означает, что плата обработала команду. Неизвестная команда получает ответ <code>ERR command</code>.</p>
+<p>Проверьте скетч в Serial Monitor: скорость <strong>115200</strong>, окончание строки <strong>Newline</strong>. Отправьте <code>r</code>, затем <code>g</code>, затем <code>off</code>. После проверки <strong>закройте Serial Monitor</strong>, чтобы Python смог открыть порт.</p>
+<h2 id="python">Пишем Python сверху вниз</h2>
+<p>Откройте <code>examples/07_serial_led.py</code>. В этом файле нет собственных функций: команды выполняются по порядку.</p>
+<pre><code class="language-python">import time
+import serial
+from serial.tools import list_ports
 
-with serial.Serial(&quot;COM5&quot;, baudrate=115200, timeout=1,
-                   write_timeout=2) as port:
-    port.write(b&quot;ping\n&quot;)
-    print(port.readline().decode(&quot;ascii&quot;).strip())
+for port in list_ports.comports():
+    print(port.device, port.description)
+
+port_name = input(&quot;Введите порт платы: &quot;).strip()
+board = serial.Serial(port_name, 115200, timeout=1, write_timeout=2)
+time.sleep(2)
 </code></pre>
-<p>Замените <code>COM5</code> своим портом. <code>b"..."</code> — байты. <code>write()</code> отправляет байты, <code>readline()</code> ждёт строку с переводом строки, <code>decode()</code> превращает байты в текст, <code>strip()</code> убирает конец строки. <code>timeout</code> ограничивает ожидание; пустая строка после таймаута не означает успешную команду. <code>with</code> закрывает порт при выходе. Если плата перезапустилась при открытии порта, однократного <code>ping</code> может не хватить — это решает полный пример ниже. Поведение чтения описано в <a href="https://pyserial.readthedocs.io/en/latest/pyserial_api.html">API pySerial</a>.</p>
-<h2 id="_5">Полный пример с подтверждениями</h2>
-<p>Запустите <strong>одну</strong> команду со своим портом:</p>
-<pre><code class="language-bash"># Windows
-python textbook/examples/07_serial_led.py --port COM5
-# macOS: имя только пример, замените результатом --list
-python textbook/examples/07_serial_led.py --port /dev/cu.usbmodem1101
-# Linux
-python textbook/examples/07_serial_led.py --port /dev/ttyACM0
+<p>Цикл печатает доступные порты. Введите имя порта платы: например, <code>COM5</code>, <code>/dev/cu.usbmodem1101</code> или <code>/dev/ttyACM0</code>. Это примеры — ваше имя берём из списка. Можно сравнить список до и после подключения платы.</p>
+<p><code>timeout=1</code> ограничивает чтение одной секундой, <code>write_timeout=2</code> — ожидание отправки двумя секундами. <code>sleep(2)</code> даёт плате время после открытия порта. Если она запускается дольше, первая команда может остаться без ответа — повторите её после запуска.</p>
+<p>Сама отправка занимает одну строку:</p>
+<pre><code class="language-python">board.write((command + &quot;\n&quot;).encode(&quot;ascii&quot;))
 </code></pre>
-<p>Программа сначала повторяет <code>ping</code>, пока не получит <code>READY</code> (до 8 секунд). Такой обмен не зависит от того, успел ли компьютер поймать сообщение при запуске платы. Только после готовности начинается ввод пользователя:</p>
-<pre><code class="language-python">command = input(&quot;&gt; &quot;).strip().lower()
-port.write((command + &quot;\n&quot;).encode(&quot;ascii&quot;))
+<p>Добавляем конец строки и превращаем текст в байты. Плата читает строку до этого конца. Ответ превращаем обратно в текст:</p>
+<pre><code class="language-python">answer = board.readline().decode(&quot;ascii&quot;).strip()
+if answer:
+    print(answer)
+else:
+    print(&quot;Нет ответа за 1 секунду. Проверьте порт и прошивку.&quot;)
 </code></pre>
-<p>Полный файл <code>examples/07_serial_led.py</code> проверяет допустимые команды, ждёт <strong>именно</strong> <code>OK r</code> для <code>r</code>, сообщает об ошибках и при штатном выходе отправляет <code>off</code>. Таймаут ответа не доказывает, что команда не выполнилась: мог потеряться ответ. Посмотрите на LED и восстановите связь. При физическом обрыве USB программное выключение подтвердить нельзя.</p>
-<p>Ожидаемый диалог:</p>
-<pre><code class="language-text">READY: r — красный, g — зелёный, b — синий, off — погасить, q — выход
-&gt; r
+<p>Пустой ответ означает, что за отведённое время не получили строку. Это не подтверждение выполнения команды. <a href="https://pyserial.readthedocs.io/en/latest/pyserial_api.html">Чтение и таймауты pySerial</a>.</p>
+<p>В <code>while True</code> программа снова и снова спрашивает команду. <code>continue</code> пропускает неправильный ввод, <code>break</code> заканчивает цикл. При <code>q</code> программа отправляет <code>off</code>, читает ответ и выходит. Блок <code>finally</code> выполняет <code>board.close()</code>, даже если возникла ошибка. Для обычного завершения используйте <code>q</code>: закрытие порта само по себе не выключает LED.</p>
+<h2 id="_2">Запускаем</h2>
+<p>В терминале VS Code выберите окружение курса. Если pySerial отсутствует, выполните <code>python -m pip install pyserial</code>. Из папки <code>textbook</code> запустите:</p>
+<pre><code class="language-bash">python examples/07_serial_led.py
+</code></pre>
+<p>Ожидаемый диалог (имя порта будет вашим):</p>
+<pre><code class="language-text">Введите порт платы: COM5
+r / g / b / off / q: r
 OK r
-&gt; g
+r / g / b / off / q: g
 OK g
-&gt; b
+r / g / b / off / q: b
 OK b
-&gt; off
+r / g / b / off / q: q
 OK off
-&gt; q
 </code></pre>
-<h2 id="_6">Практика и контроль</h2>
+<p>На обеих сторонах стоит <strong>115200</strong>. Здесь используется USB Serial, а не отдельный UART-переходник. У выбранного core USB <code>Serial</code> не меняет физическую скорость USB от baudrate; для аппаратного UART <code>Serial1</code> скорость уже имеет прямое значение. <a href="https://arduino-pico.readthedocs.io/en/stable/serial.html">Документация Arduino-Pico Serial</a>.</p>
+<h2 id="_3">Проверь себя</h2>
 <ol>
-<li>Переключите r → g → b и убедитесь, что предыдущий диод гаснет.</li>
-<li>Введите <code>R</code>: Python нормализует регистр. Введите <code>hello</code>: Python отклоняет команду до отправки.</li>
-<li>Закройте Python. Через Serial Monitor отправьте <code>hello</code> с Newline: уже <strong>плата</strong> должна ответить <code>ERR command</code>. Закройте монитор.</li>
-<li>Объясните, зачем <code>\n</code>, подтверждение <code>OK</code> и проверка <code>READY</code>.</li>
-<li>На консультации добавьте команду <code>all</code> в обе программы. После этого можно связать результат цветовой маски с <code>r/g/b</code>, отправляя команду <strong>при смене состояния</strong>, а не на каждом кадре.</li>
+<li>Переключи r → g → b. Предыдущий LED должен гаснуть.</li>
+<li>Введи <code>off</code>, затем снова <code>r</code>. Для смены цвета перепрошивка не нужна.</li>
+<li>Введи неизвестное слово. Python должен предложить правильные команды.</li>
+<li>Объясни, зачем отправлять <code>\n</code> и читать ответ платы.</li>
+<li>Для консультации: добавь <code>all</code> в Python и Arduino, чтобы включать все три LED.</li>
 </ol>
-<p>Готово, если ученик самостоятельно выбирает порт, получает <code>READY</code> и три раза переключает свет без перепрошивки.</p>
-<h2 id="-">Если что-то не работает</h2>
+<h2 id="_4">Если не получилось</h2>
 <table>
 <thead>
 <tr>
-<th>Симптом</th>
-<th>Проверка</th>
+<th>Что произошло</th>
+<th>Что проверить</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>No module named serial</code></td>
-<td>Выбран ли Python окружения курса? Установить <code>python -m pip install pyserial</code> именно в него. Не называйте свой файл <code>serial.py</code>.</td>
+<td>Нет модуля <code>serial</code></td>
+<td>Установлен ли <code>pyserial</code> в выбранном окружении? Не называйте свой файл <code>serial.py</code>.</td>
 </tr>
 <tr>
-<td>Порта нет</td>
-<td>USB-кабель с данными, разъём, загружен ли скетч; режим BOOTSEL не является обычным serial-портом.</td>
+<td>Порта платы нет</td>
+<td>USB-кабель передаёт данные? Загружен скетч? Режим BOOTSEL — не обычный serial-порт.</td>
 </tr>
 <tr>
-<td>Порт занят / access denied</td>
-<td>Закрыть Serial Monitor и другие программы, заново посмотреть <code>--list</code>; в Linux проверить права доступа к порту.</td>
+<td>Порт занят</td>
+<td>Закройте Serial Monitor и другие программы, использующие плату.</td>
 </tr>
 <tr>
-<td>Нет <code>READY</code></td>
-<td>Верный порт, прошит ли именно этот скетч, выбран стандартный USB Serial, окончание строки <code>\n</code>.</td>
+<td>Нет ответа</td>
+<td>Верный порт, актуальная прошивка, плата успела запуститься.</td>
 </tr>
 <tr>
-<td><code>OK r</code> есть, LED не горит</td>
-<td>GPIO и физический номер, полярность, общий GND, контакты резистора. Проверять при отключённом питании.</td>
-</tr>
-<tr>
-<td>При g остаётся красный</td>
-<td>Проверить, что используется <code>setLeds(false, true, false)</code> и актуальная прошивка.</td>
+<td>Ответ есть, LED не горит</td>
+<td>При отключённом питании проверьте полярность, резистор, GPIO и GND.</td>
 </tr>
 </tbody>
 </table>
-<p>Программные примеры подготовлены для этого протокола. Физическую сборку, компиляцию под конкретную модель и переключение реальных LED нужно проверить на оборудовании перед занятием.</p></section><section id="04_teacher"><h1 id="4">4. План преподавателя и консультации</h1>
+<p>Перед занятием преподавателю нужно проверить компиляцию скетча под конкретную плату и переключение физических LED. Программная проверка без платы этого не заменяет.</p></section><section id="04_teacher"><h1 id="4">4. План преподавателя и консультации</h1>
 <p>Предполагаем пару 90 минут и базовое знакомство учеников с переменными, условиями и циклами. Если Python совсем новый, разберите раздел 0.3 до первой пары и выделите консультацию на циклы. Полное самостоятельное написание всех семи программ с нуля в 180 минут малореалистично: на паре ученики набирают ключевые операции, служебный код получают готовым.</p>
 <h2 id="1">Пара 1 — изображение и поиск объектов</h2>
 <table>
@@ -707,7 +674,7 @@ OK off
 <li>Рабочее Python-окружение на каждом компьютере, папку учебника и исходное фото.</li>
 <li>Веб-камеру на группу, распечатку <code>assets/aruco_4x4_50_id7.png</code> с белым полем. Можно показывать маркер на другом экране, но блики ухудшают обнаружение.</li>
 <li>RP2040-плату, USB-кабель с передачей данных, макетную плату, три LED и три резистора, провода. Сверить GPIO с моделью платы; схема в учебнике рассчитана на обычный Raspberry Pi Pico.</li>
-<li>Резервный компьютер и подготовленную прошивку. Если камера недоступна, демонстрируйте <code>aruco_detected.png</code> и offline-проверку маркера; это не заменяет проверку живого потока.</li>
+<li>Резервный компьютер и подготовленную прошивку. Если камера недоступна, демонстрируйте <code>aruco_detected.png</code> и пример распознавания маркера на фотографии из главы 2; это не заменяет проверку живого потока.</li>
 </ul>
 <h2 id="_2">Три контрольных задания</h2>
 <p><strong>1. «Редактор изображения», 5–7 минут.</strong> Вырезать область заданного размера, вывести BGR одного пикселя, циклом усилить красный канал во всём изображении. Критерии: размер crop совпадает с разницей границ; исходник не изменён; значения не переполняются; ученик понимает <code>y,x</code>.</p>

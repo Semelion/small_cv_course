@@ -49,24 +49,15 @@ python -m pip install -r requirements.txt
 python textbook/examples/01_pixels.py
 python textbook/examples/02_colors.py
 python textbook/examples/03_objects.py
-python textbook/examples/04_camera.py --camera 0
-python textbook/examples/06_make_marker.py --id 7
-python textbook/examples/05_aruco.py --camera 0
-python textbook/examples/07_serial_led.py --list
+python textbook/examples/04_camera.py
+python textbook/examples/06_make_marker.py
+python textbook/examples/05_aruco.py
+python textbook/examples/07_serial_led.py
 ```
 
-Перед запуском Serial загрузите `textbook/arduino/rgb_serial/rgb_serial.ino` через Arduino IDE, закройте Serial Monitor и укажите свой порт:
+Перед запуском Serial загрузите `textbook/arduino/rgb_serial/rgb_serial.ino` через Arduino IDE и закройте Serial Monitor. Программа покажет порты и попросит ввести имя нужного порта, затем команды `r`, `g`, `b`, `off` или `q`.
 
-```bash
-python textbook/examples/07_serial_led.py --port COM5
-# macOS: --port /dev/cu.usbmodem...; Linux: --port /dev/ttyACM0
-```
-
-Для первых трёх программ доступен `--no-gui`: результаты сохраняются в `textbook/assets/generated`. Проверка ArUco без камеры:
-
-```bash
-python textbook/examples/05_aruco.py --image textbook/assets/aruco_4x4_50_id7.png --no-gui
-```
+Все семь примеров написаны последовательно, сверху вниз: без своих функций, `argparse`, `pathlib` и блока `if __name__ == "__main__"`. Номер камеры и ID маркера меняются прямо в коде. В Arduino остаются только обязательные `setup()` и `loop()`.
 
 ## Структура
 
@@ -99,4 +90,4 @@ python textbook/tools/check_site.py
 
 ## Проверки
 
-Примеры обработки изображений и распознавания ArUco проверены программно; Serial проверен через loopback. Живая камера, компиляция Arduino и физическое переключение LED требуют проверки на оборудовании перед занятием. Подробности — в [CHECKS.md](textbook/CHECKS.md).
+Примеры обработки изображений и распознавания ArUco проверены программно; логика Serial проверена с имитацией платы. Живая камера, компиляция Arduino и физическое переключение LED требуют проверки на оборудовании перед занятием. Подробности — в [CHECKS.md](textbook/CHECKS.md).

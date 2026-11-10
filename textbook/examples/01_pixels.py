@@ -1,44 +1,32 @@
-"""Матрица, обрезка и окрашивание. Запуск: python textbook/examples/01_pixels.py"""
-import argparse
+# Запускай из папки CV_course: python textbook/examples/01_pixels.py
 import cv2 as cv
-import numpy as np
 
+img = cv.imread('textbook/assets/scene.png')
+if img is None:
+    raise FileNotFoundError('Не найдено textbook/assets/scene.png. Запусти из CV_course.')
 
+print('Размер:', img.shape)
+print('Тип:', img.dtype)
+print('BGR пикселя x=100, y=120:', img[120, 100])
+height, width = img.shape[:2]
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--no-gui', action='store_true')
-    args = parser.parse_args()
-    img = cv.imread('textbook/assets/scene.png')
-    if img is None:
-        raise FileNotFoundError('textbook/assets/scene.png')
-    height, width = img.shape[:2]
-    print('shape:', img.shape, 'dtype:', img.dtype)
-    print('BGR пикселя x=100, y=120:', img[120, 100])
-    crop = img[80:240, 60:260].copy()
-    marked = img.copy()
-    marked[120, 100] = (255, 255, 255)
-    marked[115:126, 95:106] = (255, 255, 255)  # Увеличим метку до 11×11.
-    tinted = img.copy()
-    for y in range(height):
-        for x in range(width):
-            b, g, r = img[y, x]
-            tinted[y, x] = (int(b), int(g), min(255, int(r) + 60))
-    # Та же операция сразу над каналом; int16 предотвращает переполнение uint8.
-    fast = img.copy()
-    fast[:, :, 2] = np.clip(img[:, :, 2].astype(np.int16) + 60, 0, 255).astype(np.uint8)
-    assert np.array_equal(tinted, fast)
-    out = 'textbook/assets/generated'
-    for name, result in [('crop', crop), ('pixel', marked), ('tinted', tinted)]:
-        if not cv.imwrite(f'{out}/{name}.png', result):
-            raise OSError(f'Не удалось сохранить {name}')
-        if not args.no_gui:
-            cv.imshow(name, result)
-    if not args.no_gui:
-        cv.waitKey(0)
-        cv.destroyAllWindows()
-    print('Сохранено:', out)
+crop = img[80:240, 60:260].copy()
+changed = img.copy()
+changed[120, 100] = (255, 255, 255)
+changed[115:126, 95:106] = (255, 255, 255)
 
+tinted = img.copy()
+for y in range(height):
+    for x in range(width):
+        b, g, r = img[y, x]
+        tinted[y, x] = (int(b), int(g), min(255, int(r) + 60))
 
-if __name__ == '__main__':
-    main()
+cv.imwrite('textbook/assets/generated/crop.png', crop)
+cv.imwrite('textbook/assets/generated/pixel.png', changed)
+cv.imwrite('textbook/assets/generated/tinted.png', tinted)
+cv.imshow('original', img)
+cv.imshow('crop', crop)
+cv.imshow('pixel', changed)
+cv.imshow('tinted', tinted)
+cv.waitKey(0)
+cv.destroyAllWindows()

@@ -1,24 +1,16 @@
-"""Сохранить ArUco DICT_4X4_50 с белым полем; ID по умолчанию 7."""
-import argparse
 import cv2 as cv
 
+marker_id = 7
+output = 'textbook/assets/aruco_4x4_50_id7.png'
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--id', type=int, default=7)
-    args = parser.parse_args()
-    if not 0 <= args.id < 50:
-        parser.error('Для DICT_4X4_50 ID должен быть от 0 до 49.')
-    if not hasattr(cv, 'aruco') or not hasattr(cv.aruco, 'generateImageMarker'):
-        raise SystemExit('Нужен современный opencv-contrib-python; проверьте интерпретатор.')
-    dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
-    marker = cv.aruco.generateImageMarker(dictionary, args.id, 300)
-    printable = cv.copyMakeBorder(marker, 60, 60, 60, 60, cv.BORDER_CONSTANT, value=255)
-    output = f'textbook/assets/aruco_4x4_50_id{args.id}.png'
-    if not cv.imwrite(output, printable):
-        raise SystemExit(f'Не удалось сохранить {output}')
-    print(output)
+dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
+marker = cv.aruco.generateImageMarker(dictionary, marker_id, 300)
+printable = cv.copyMakeBorder(
+    marker, 60, 60, 60, 60, cv.BORDER_CONSTANT, value=255
+)
 
-
-if __name__ == '__main__':
-    main()
+saved = cv.imwrite(output, printable)
+if saved:
+    print('Маркер сохранён:', output)
+else:
+    print('Не удалось сохранить маркер. Проверь путь:', output)
